@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Church Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="admin_members.html">Manage Members</a></li>
+                <li><a href="#" id="logout-button">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <h1>Admin Dashboard</h1>
+        <div class="dashboard-widgets">
+            <div class="widget">
+                <h2>Total Members</h2>
+                <p id="total-members">Loading...</p>
+            </div>
+            <div class="widget">
+                <h2>Recent Activities</h2>
+                <ul id="recent-activities">
+                    <!-- Activities will be dynamically added here -->
+                </ul>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 Church Management System</p>
+    </footer>
+    
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h2 class="text-center">Sign Up</h2>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="zaq_number">ZAQ Number</label>
+                <input type="text" class="form-control" id="zaq_number" name="zaq_number" required>
+            </div>
+            <div class="form-group">
+                <label for="jumuiya">Jumuiya</label>
+                <input type="text" class="form-control" id="jumuiya" name="jumuiya" required>
+            </div>
+            <div class="form-group">
+                <label for="outstation">Outstation</label>
+                <input type="text" class="form-control" id="outstation" name="outstation" required>
+            </div>
+            <div class="form-group">
+                <label for="center">Center</label>
+                <input type="text" class="form-control" id="center" name="center" required>
+            </div>
+            <div class="form-group">
+                <label for="zone">Zone</label>
+                <input type="text" class="form-control" id="zone" name="zone" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" class="form-control" id="phone" name="phone" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("signupForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent actual form submission
+            
+            alert("Sign up successful! Redirecting to login page...");
+            window.location.href = "login.html"; // Redirect to login page
+        });
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
