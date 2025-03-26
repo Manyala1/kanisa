@@ -28,7 +28,7 @@ def logout():
     flash('Logged out successfully!', category='info')
     return redirect(url_for('auth.login'))
 
-@auth.route('/sign_up', methods=['GET', 'POST'])
+@auth.route('/sign_up', methods=['GET', 'POST'], endpoint='sign_up')
 def sign_up():
     if request.method == 'POST':
         full_name = request.form.get('full name')
@@ -50,6 +50,6 @@ def sign_up():
 
     return render_template('sign_up.html', user=current_user)
 
-@auth.route('/admin')
+@auth.route('/admin', endpoint='admin')
 def admin_dashboard():
     return render_template('admin_dashboard.html', user=current_user)
