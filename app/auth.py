@@ -34,7 +34,7 @@ def sign_up():
         full_name = request.form.get('full name')
         zaq_number = request.form.get('zaq_number')
         jumuiya = request.form.get('jumuiya')
-        outstation = request.form.get('outstation')  # Correctly retrieve outstation
+        outstation = request.form.get('outstation')
         center = request.form.get('center')
         zone = request.form.get('zone')
         phone_number = request.form.get('phone_number')
@@ -48,7 +48,7 @@ def sign_up():
                 full_name=full_name,
                 phone_number=phone_number,
                 jumuiya=jumuiya,
-                outstation=outstation, 
+                outstation=outstation,
                 center=center,
                 zone=zone,
                 user_id=current_user.id if current_user.is_authenticated else None
