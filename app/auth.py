@@ -34,6 +34,7 @@ def sign_up():
         full_name = request.form.get('full name')
         zaq_number = request.form.get('zaq_number')
         jumuiya = request.form.get('jumuiya')
+        outstation = request.form.get('outstation')  # Correctly retrieve outstation
         center = request.form.get('center')
         zone = request.form.get('zone')
         phone_number = request.form.get('phone_number')
@@ -42,11 +43,24 @@ def sign_up():
         if existing_member:
             flash('ZAQ Number already exists!', category='error')
         else:
-            new_member = Member(zaq_number=zaq_number, full_name=full_name, phone_number=phone_number)
+            new_member = Member(
+                zaq_number=zaq_number,
+                full_name=full_name,
+                phone_number=phone_number,
+                jumuiya=jumuiya,
+                outstation=outstation, 
+                center=center,
+                zone=zone,
+                user_id=current_user.id if current_user.is_authenticated else None
+            )
             db.session.add(new_member)
-            db.session.commit()
-            flash('Signup successful! Please log in.', category='success')
-            return redirect(url_for('auth.login'))
+            try:
+                db.session.commit()
+                flash('Signup successful! Please log in.', category='success')
+                return redirect(url_for('auth.login'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'An error occurred: {str(e)}', category='error')
 
     return render_template('sign_up.html', user=current_user)
 

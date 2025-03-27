@@ -1,16 +1,22 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import os
 from os import path
 from flask_login import LoginManager
 from .config import Config
 
 db = SQLAlchemy()
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kanisa.db'  # Update with your database URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from .views import views
     from .auth import auth
