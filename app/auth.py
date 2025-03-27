@@ -116,10 +116,6 @@ def admin_signup():
                 email=email,
                 phone_number=phone_number,
                 password=hashed_password,
-                jumuiya='',  # Optional fields can be left empty
-                outstation='',
-                center='',
-                zone=''
             )
             db.session.add(new_admin)
             try:
@@ -131,3 +127,9 @@ def admin_signup():
                 flash(f'An error occurred: {str(e)}', category='error')
 
     return render_template('admin_signup.html', user=current_user)
+
+@auth.route('/admin_logout', methods=['GET'], endpoint='admin_logout')
+def admin_logout():
+    logout_user()  # Log out the current user
+    flash('Admin logged out successfully!', category='info')
+    return render_template('admin_logout.html')  # Render the logout confirmation page
