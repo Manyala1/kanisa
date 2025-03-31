@@ -9,8 +9,8 @@ views = Blueprint('views', __name__)
 @views.route('/', endpoint='home')
 @login_required
 def home():
-    # Fetch all events added by the admin from the database
-    events = Event.query.filter_by(added_by='admin').order_by(Event.date).all()
+    # Fetch all events from the database
+    events = Event.query.order_by(Event.date).all()
     return render_template('home.html', user=current_user, events=events)
 
 @views.route('/add_member', methods=['GET', 'POST'])
@@ -19,6 +19,11 @@ def add_member():
         zaq_number = request.form.get('zaq_number')
         full_name = request.form.get('full_name')
         phone_number = request.form.get('phone_number')
+        jumuiya = request.form.get('jumuiya')
+        outstation = request.form.get('outstation')
+        center = request.form.get('center')
+        zone = request.form.get('zone')
+          
 
         if not zaq_number or not full_name or not phone_number:
             flash('All fields are required!', category='error')
@@ -40,6 +45,10 @@ def add_event():
     if request.method == 'POST':
         title = request.form.get('title')
         date_str = request.form.get('date')
+        venue = request.form.get('venue')
+        theme = request.form.get('theme')
+        involved = request.form.get('involved')
+        user_id = current_user.id
 
         if not title or not date_str:
             flash('All fields are required!', category='error')

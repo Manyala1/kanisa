@@ -24,7 +24,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User  # Import specific model needed
+    from .models import User, Member, Admin  # Import specific models needed
     
     # Create the instance folder if it doesn't exist
     os.makedirs('instance', exist_ok=True)
@@ -39,9 +39,10 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(id):
-        try:
-            return User.query.get(int(id))
-        except:
-            return None
+        # Try to load the user as a Member first, then as an Admin
+        user = Member.query.get(int(id))
+        if not user:
+            user = Admin.query.get(int(id))
+        return user
 
     return app

@@ -15,9 +15,9 @@ def login():
         member = Member.query.filter_by(zaq_number=zaq_number).first()
 
         if member and member.phone_number == phone_number:
-            login_user(member, remember=True)
+            login_user(member, remember=True)  # Log in the member
             flash('Login successful!', category='success')
-            return redirect(url_for('views.home'))
+            return redirect(url_for('views.home'))  # Redirect to the events page
         else:
             flash('Invalid ZAQ Number or phone number.', category='error')
 
