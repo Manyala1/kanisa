@@ -5,9 +5,9 @@ from datetime import datetime
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    zaq_number = db.Column(db.String(50), unique=True, nullable=False)  
-    full_name = db.Column(db.String(150), nullable=False)  
-    phone_number = db.Column(db.String(20), nullable=False)  
+    full_name = db.Column(db.String(150), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    zaq_number = db.Column(db.String(50), unique=True, nullable=False)
     jumuiya = db.Column(db.String(150), nullable=False)
     outstation = db.Column(db.String(150), nullable=False)
     center = db.Column(db.String(150), nullable=False)
@@ -15,6 +15,14 @@ class User(db.Model, UserMixin):
     # Add relationships
     events = db.relationship('Event', backref='user', lazy=True)
     members = db.relationship('Member', backref='user', lazy=True)
+
+class Admin(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)  # Admin login uses email
+    full_name = db.Column(db.String(150), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(150), nullable=False)  # Store hashed passwords
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now())  # Track admin creation time
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)

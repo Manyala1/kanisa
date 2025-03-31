@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from .models import Member
+from .models import Member, User, Admin  # Import the new Admin model
 from . import db
 from flask_login import login_user, logout_user, current_user, login_required  # Import login_required decorator
 from werkzeug.security import generate_password_hash, check_password_hash  # Import for password hashing
 
-auth = Blueprint('auth', __name__)
+auth = Blueprint('auth', 'auth')
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -76,7 +76,7 @@ def admin_login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        admin = User.query.filter_by(email=email).first()
+        admin = Admin.query.filter_by(email=email).first()  # Use the Admin model
         if admin and check_password_hash(admin.password, password):
             login_user(admin, remember=True)
             flash('Admin login successful!', category='success')
@@ -93,7 +93,7 @@ def admin_signup():
         email = request.form.get('email')
         phone_number = request.form.get('phone_number')
         password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')  # Get the confirmation password
+        confirm_password = request.form.get('confirm_password')
 
         # Check if passwords match
         if password != confirm_password:
@@ -101,21 +101,22 @@ def admin_signup():
             return redirect(url_for('auth.admin_signup'))
 
         # Check if the admin limit has been reached
-        admin_count = User.query.count()
+        admin_count = Admin.query.count()
         if admin_count >= 2:
             flash('Admin limit reached. Only two admins are allowed.', category='error')
             return redirect(url_for('auth.admin_signup'))
 
-        existing_admin = User.query.filter_by(email=email).first()
+        existing_admin = Admin.query.filter_by(email=email).first()
         if existing_admin:
             flash('Email already exists!', category='error')
         else:
-            hashed_password = generate_password_hash(password, method='sha256')
-            new_admin = User(
+            # Use a valid hashing method
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+            new_admin = Admin(
                 full_name=full_name,
                 email=email,
                 phone_number=phone_number,
-                password=hashed_password,
+                password=hashed_password
             )
             db.session.add(new_admin)
             try:
