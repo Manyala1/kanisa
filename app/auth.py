@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from .models import Member, User, Admin  # Import the new Admin model
+from .models import Member, User, Admin, Event  # Import the new Event model
 from . import db
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -79,7 +79,7 @@ def admin_login():
         if admin and check_password_hash(admin.password, password):
             login_user(admin, remember=True)
             flash('Admin login successful!', category='success')
-            return redirect(url_for('auth.admin_activities'))  # Redirect to admin_activities.html
+            return redirect(url_for('auth.admin_activities'))
         else:
             flash('Invalid email or password.', category='error')
 
@@ -129,7 +129,7 @@ def admin_signup():
 def admin_logout():
     logout_user()
     flash('Admin logged out successfully!', category='info')
-    return render_template('admin_logout.html')
+    return redirect(url_for('auth.admin_login'))
 
 @auth.route('/admin_activities', endpoint='admin_activities')
 def admin_activities():
@@ -139,9 +139,20 @@ def admin_activities():
 def add_event():
     if request.method == 'POST':
         title = request.form.get('title')
+        theme = request.form.get('theme')  # New field for event theme
+        involved = request.form.get('involved')  # New field for who is involved
+        venue = request.form.get('venue')  # New field for venue
         date = request.form.get('date')
 
-        new_event = Event(title=title, date=date, user_id=current_user.id)
+        # Create a new event with the additional fields
+        new_event = Event(
+            title=title,
+            theme=theme,
+            involved=involved,
+            venue=venue,
+            date=date,
+            user_id=current_user.id
+        )
         db.session.add(new_event)
         try:
             db.session.commit()
@@ -217,3 +228,80 @@ def manage_members():
         search_query=search_query,
         sort_by=sort_by
     )
+
+@auth.route('/edit_member/<int:member_id>', methods=['GET', 'POST'], endpoint='edit_member')
+def edit_member(member_id):
+    member = Member.query.get_or_404(member_id)
+
+    if request.method == 'POST':
+        member.full_name = request.form.get('full_name')
+        member.zaq_number = request.form.get('zaq_number')
+        member.jumuiya = request.form.get('jumuiya')
+        member.outstation = request.form.get('outstation')
+        member.center = request.form.get('center')
+        member.zone = request.form.get('zone')
+        member.phone_number = request.form.get('phone_number')
+
+        try:
+            db.session.commit()
+            flash('Member updated successfully!', category='success')
+            return redirect(url_for('auth.manage_members'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred: {str(e)}', category='error')
+
+    return render_template('edit_member.html', member=member, user=current_user)
+
+@auth.route('/delete_member/<int:member_id>', methods=['POST'], endpoint='delete_member')
+def delete_member(member_id):
+    member = Member.query.get_or_404(member_id)
+
+    try:
+        db.session.delete(member)
+        db.session.commit()
+        flash('Member deleted successfully!', category='success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'An error occurred: {str(e)}', category='error')
+
+    return redirect(url_for('auth.manage_members'))
+
+@auth.route('/manage_events', methods=['GET'], endpoint='manage_events')
+def manage_events():
+    events = Event.query.order_by(Event.date).all()
+    return render_template('manage_events.html', user=current_user, events=events)
+
+@auth.route('/edit_event/<int:event_id>', methods=['GET', 'POST'], endpoint='edit_event')
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    if request.method == 'POST':
+        event.title = request.form.get('title')
+        event.theme = request.form.get('theme')
+        event.involved = request.form.get('involved')
+        event.venue = request.form.get('venue')
+        event.date = request.form.get('date')
+
+        try:
+            db.session.commit()
+            flash('Event updated successfully!', category='success')
+            return redirect(url_for('auth.manage_events'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred: {str(e)}', category='error')
+
+    return render_template('edit_event.html', user=current_user, event=event)
+
+@auth.route('/delete_event/<int:event_id>', methods=['POST'], endpoint='delete_event')
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    try:
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event deleted successfully!', category='success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'An error occurred: {str(e)}', category='error')
+
+    return redirect(url_for('auth.manage_events'))

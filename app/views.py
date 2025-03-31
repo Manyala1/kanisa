@@ -1,14 +1,17 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from flask_login import current_user
+from flask_login import login_required, current_user
 from .models import Member, Event
 from . import db
 from datetime import datetime
 
 views = Blueprint('views', __name__)
 
-@views.route('/')
+@views.route('/', endpoint='home')
+@login_required
 def home():
-    return render_template('home.html', user=current_user)
+    # Fetch all events added by the admin from the database
+    events = Event.query.filter_by(added_by='admin').order_by(Event.date).all()
+    return render_template('home.html', user=current_user, events=events)
 
 @views.route('/add_member', methods=['GET', 'POST'])
 def add_member():

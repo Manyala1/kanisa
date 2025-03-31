@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Event</h2>
+    <form method="POST" action="{{ url_for('auth.edit_event', event_id=event.id) }}">
+        <div class="form-group">
+            <label for="title">Event Title:</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ event.title }}" required>
+        </div>
+        <div class="form-group">
+            <label for="theme">Event Theme:</label>
+            <input type="text" class="form-control" id="theme" name="theme" value="{{ event.theme }}" required>
+        </div>
+        <div class="form-group">
+            <label for="involved">Who is Involved:</label>
+            <input type="text" class="form-control" id="involved" name="involved" value="{{ event.involved }}" required>
+        </div>
+        <div class="form-group">
+            <label for="venue">Venue:</label>
+            <input type="text" class="form-control" id="venue" name="venue" value="{{ event.venue }}" required>
+        </div>
+        <div class="form-group">
+            <label for="date">Event Date:</label>
+            <input type="date" class="form-control" id="date" name="date" value="{{ event.date.strftime('%Y-%m-%d') }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Event</button>
+    </form>
+</div>
+{% endblock %}
