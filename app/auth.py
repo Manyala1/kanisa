@@ -155,6 +155,38 @@ def add_event():
 
 @auth.route('/add_member', methods=['GET', 'POST'], endpoint='add_member')
 def add_member():
+    if request.method == 'POST':
+        full_name = request.form.get('full name')
+        zaq_number = request.form.get('zaq_number')
+        jumuiya = request.form.get('jumuiya')
+        outstation = request.form.get('outstation')
+        center = request.form.get('center')
+        zone = request.form.get('zone')
+        phone_number = request.form.get('phone_number')
+
+        existing_member = Member.query.filter_by(zaq_number=zaq_number).first()
+        if existing_member:
+            flash('ZAQ Number already exists!', category='error')
+        else:
+            new_member = Member(
+                zaq_number=zaq_number,
+                full_name=full_name,
+                phone_number=phone_number,
+                jumuiya=jumuiya,
+                outstation=outstation,
+                center=center,
+                zone=zone,
+                user_id=None  # Admin is adding the member, so no user_id is linked
+            )
+            db.session.add(new_member)
+            try:
+                db.session.commit()
+                flash('Member added successfully!', category='success')
+                return redirect(url_for('auth.admin_activities'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'An error occurred: {str(e)}', category='error')
+
     return render_template('sign_up.html', user=current_user)
 
 @auth.route('/manage_members', endpoint='manage_members')
