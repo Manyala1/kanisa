@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from .models import Member, User, Admin  # Import the new Admin model
 from . import db
-from flask_login import login_user, logout_user, current_user, login_required  # Import login_required decorator
-from werkzeug.security import generate_password_hash, check_password_hash  # Import for password hashing
+from flask_login import login_user, logout_user, current_user, login_required
+from werkzeug.security import generate_password_hash, check_password_hash
 
-auth = Blueprint('auth', 'auth')
+auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -67,7 +67,6 @@ def sign_up():
 
 @auth.route('/admin', endpoint='admin')
 def admin_dashboard():
-    # Directly render the admin dashboard without requiring login
     return render_template('admin_dashboard.html')
 
 @auth.route('/admin_login', methods=['GET', 'POST'], endpoint='admin_login')
@@ -76,11 +75,11 @@ def admin_login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        admin = Admin.query.filter_by(email=email).first()  # Use the Admin model
+        admin = Admin.query.filter_by(email=email).first()
         if admin and check_password_hash(admin.password, password):
             login_user(admin, remember=True)
             flash('Admin login successful!', category='success')
-            return redirect(url_for('auth.admin_dashboard'))
+            return redirect(url_for('auth.admin_activities'))  # Redirect to admin_activities.html
         else:
             flash('Invalid email or password.', category='error')
 
@@ -95,12 +94,10 @@ def admin_signup():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
 
-        # Check if passwords match
         if password != confirm_password:
             flash('Passwords do not match!', category='error')
             return redirect(url_for('auth.admin_signup'))
 
-        # Check if the admin limit has been reached
         admin_count = Admin.query.count()
         if admin_count >= 2:
             flash('Admin limit reached. Only two admins are allowed.', category='error')
@@ -110,7 +107,6 @@ def admin_signup():
         if existing_admin:
             flash('Email already exists!', category='error')
         else:
-            # Use a valid hashing method
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
             new_admin = Admin(
                 full_name=full_name,
@@ -131,6 +127,36 @@ def admin_signup():
 
 @auth.route('/admin_logout', methods=['GET'], endpoint='admin_logout')
 def admin_logout():
-    logout_user()  # Log out the current user
+    logout_user()
     flash('Admin logged out successfully!', category='info')
-    return render_template('admin_logout.html')  # Render the logout confirmation page
+    return render_template('admin_logout.html')
+
+@auth.route('/admin_activities', endpoint='admin_activities')
+def admin_activities():
+    return render_template('admin_activities.html', user=current_user)
+
+@auth.route('/add_event', methods=['GET', 'POST'], endpoint='add_event')
+def add_event():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        date = request.form.get('date')
+
+        new_event = Event(title=title, date=date, user_id=current_user.id)
+        db.session.add(new_event)
+        try:
+            db.session.commit()
+            flash('Event added successfully!', category='success')
+            return redirect(url_for('auth.admin_activities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred: {str(e)}', category='error')
+
+    return render_template('add_event.html', user=current_user)
+
+@auth.route('/add_member', methods=['GET', 'POST'], endpoint='add_member')
+def add_member():
+    return render_template('sign_up.html', user=current_user)
+
+@auth.route('/manage_members', endpoint='manage_members')
+def manage_members():
+    return render_template('manage_members.html', user=current_user)
