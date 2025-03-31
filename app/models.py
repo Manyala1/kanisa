@@ -29,9 +29,9 @@ class Event(db.Model):
     title = db.Column(db.String(150), nullable=False)  
     date = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    theme = db.Column(db.String(150), nullable=False)  # New field for event theme
-    involved = db.Column(db.String(150), nullable=False)  # New field for who is involved
-    venue = db.Column(db.String(150), nullable=False)  # New field for venue
+    theme = db.Column(db.String(150), nullable=False) 
+    involved = db.Column(db.String(150), nullable=False)  
+    venue = db.Column(db.String(150), nullable=False)  
 
 class Member(db.Model, UserMixin):  # Inherit from UserMixin
     id = db.Column(db.Integer, primary_key=True)
