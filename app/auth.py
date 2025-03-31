@@ -17,7 +17,7 @@ def login():
         if member and member.phone_number == phone_number:
             login_user(member, remember=True)  # Log in the member
             flash('Login successful!', category='success')
-            return redirect(url_for('views.home'))  # Redirect to the events page
+            return redirect(url_for('views.home'))  # Redirect to the home page
         else:
             flash('Invalid ZAQ Number or phone number.', category='error')
 
@@ -269,6 +269,10 @@ def delete_member(member_id):
 @auth.route('/manage_events', methods=['GET'], endpoint='manage_events')
 @login_required
 def manage_events():
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
     events = Event.query.order_by(Event.date).all()
     return render_template('manage_events.html', user=current_user, events=events)
 

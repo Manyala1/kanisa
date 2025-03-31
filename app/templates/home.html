@@ -3,28 +3,14 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Welcome to DigiChurch</h2>
-    <p>Here are the upcoming events:</p>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Theme</th>
-                <th>Who is Involved</th>
-                <th>Venue</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for event in events %}
-                <tr>
-                    <td>{{ event.title }}</td>
-                    <td>{{ event.theme }}</td>
-                    <td>{{ event.involved }}</td>
-                    <td>{{ event.venue }}</td>
-                    <td>{{ event.date.strftime('%Y-%m-%d') }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <p>Choose an option below:</p>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <a href="{{ url_for('views.view_events') }}">View Events</a>
+        </li>
+        <li class="list-group-item">
+            <a href="#">View Readings</a> <!-- Add the appropriate route for readings -->
+        </li>
+    </ul>
 </div>
 {% endblock %}

@@ -9,9 +9,11 @@ views = Blueprint('views', __name__)
 @views.route('/', endpoint='home')
 @login_required
 def home():
-    # Fetch all events from the database
-    events = Event.query.order_by(Event.date).all()
-    return render_template('home.html', user=current_user, events=events)
+    # Redirect admins to the admin activities page
+    if current_user.__class__.__name__ == 'Admin':
+        return redirect(url_for('auth.admin_activities'))
+    # Render the home page for members
+    return render_template('home.html', user=current_user)
 
 @views.route('/add_member', methods=['GET', 'POST'])
 def add_member():
