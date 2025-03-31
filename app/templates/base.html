@@ -15,23 +15,18 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
-                <!-- Always visible routes -->
-                {% if not current_user.is_authenticated or current_user.__class__.__name__ != 'Admin' %}
+                {% if not current_user.is_authenticated %}
+                    <!-- Guest links -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">Member Login</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.sign_up') }}">Member Sign Up</a>
                     </li>
-                {% endif %}
-                {% if not current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.admin_login') }}">Admin Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('auth.admin_login') }}">Admin Login</a>
                     </li>
-                {% endif %}
-
-                <!-- Conditional routes based on user authentication -->
-                {% if current_user.is_authenticated %}
+                {% else %}
                     {% if current_user.__class__.__name__ == 'Admin' %}
                         <!-- Admin-specific links -->
                         <li class="nav-item">

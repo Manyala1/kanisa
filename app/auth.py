@@ -267,11 +267,13 @@ def delete_member(member_id):
     return redirect(url_for('auth.manage_members'))
 
 @auth.route('/manage_events', methods=['GET'], endpoint='manage_events')
+@login_required
 def manage_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('manage_events.html', user=current_user, events=events)
 
 @auth.route('/edit_event/<int:event_id>', methods=['GET', 'POST'], endpoint='edit_event')
+@login_required
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
 
@@ -293,6 +295,7 @@ def edit_event(event_id):
     return render_template('edit_event.html', user=current_user, event=event)
 
 @auth.route('/delete_event/<int:event_id>', methods=['POST'], endpoint='delete_event')
+@login_required
 def delete_event(event_id):
     event = Event.query.get_or_404(event_id)
 

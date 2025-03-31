@@ -48,14 +48,20 @@ def add_event():
         venue = request.form.get('venue')
         theme = request.form.get('theme')
         involved = request.form.get('involved')
-        user_id = current_user.id
 
-        if not title or not date_str:
+        if not title or not date_str or not venue or not theme or not involved:
             flash('All fields are required!', category='error')
         else:
             try:
                 date = datetime.strptime(date_str, '%Y-%m-%d')
-                new_event = Event(title=title, date=date)
+                new_event = Event(
+                    title=title,
+                    date=date,
+                    venue=venue,
+                    theme=theme,
+                    involved=involved,
+                    user_id=current_user.id
+                )
                 db.session.add(new_event)
                 db.session.commit()
                 flash('Event added successfully!', category='success')
