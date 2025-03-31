@@ -16,7 +16,13 @@ def home():
     return render_template('home.html', user=current_user)
 
 @views.route('/add_member', methods=['GET', 'POST'])
+@login_required
 def add_member():
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     if request.method == 'POST':
         zaq_number = request.form.get('zaq_number')
         full_name = request.form.get('full_name')
@@ -25,7 +31,6 @@ def add_member():
         outstation = request.form.get('outstation')
         center = request.form.get('center')
         zone = request.form.get('zone')
-          
 
         if not zaq_number or not full_name or not phone_number:
             flash('All fields are required!', category='error')
@@ -34,16 +39,30 @@ def add_member():
             if existing_member:
                 flash('ZAQ number already exists!', category='error')
             else:
-                new_member = Member(zaq_number=zaq_number, full_name=full_name, phone_number=phone_number)
+                new_member = Member(
+                    zaq_number=zaq_number,
+                    full_name=full_name,
+                    phone_number=phone_number,
+                    jumuiya=jumuiya,
+                    outstation=outstation,
+                    center=center,
+                    zone=zone
+                )
                 db.session.add(new_member)
                 db.session.commit()
                 flash('Member added successfully!', category='success')
-                return redirect(url_for('views.home'))
+                return redirect(url_for('auth.manage_members'))
 
     return render_template('add_member.html', user=current_user)
 
 @views.route('/add_event', methods=['GET', 'POST'])
+@login_required
 def add_event():
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     if request.method == 'POST':
         title = request.form.get('title')
         date_str = request.form.get('date')
@@ -61,14 +80,30 @@ def add_event():
                     date=date,
                     venue=venue,
                     theme=theme,
-                    involved=involved,
-                    user_id=current_user.id
+                    involved=involved
                 )
                 db.session.add(new_event)
                 db.session.commit()
                 flash('Event added successfully!', category='success')
-                return redirect(url_for('views.home'))
+                return redirect(url_for('auth.manage_events'))
             except ValueError:
                 flash('Invalid date format! Use YYYY-MM-DD', category='error')
 
     return render_template('add_event.html', user=current_user)
+
+@views.route('/view_events', methods=['GET'], endpoint='view_events')
+@login_required
+def view_events():
+    # Fetch all events from the database
+    events = Event.query.order_by(Event.date).all()
+    return render_template('view_events.html', user=current_user, events=events)
+
+@views.route('/view_readings', methods=['GET'], endpoint='view_readings')
+@login_required
+def view_readings():
+    # Placeholder for fetching readings (replace with actual logic)
+    readings = [
+        {"title": "Reading 1", "content": "Content of Reading 1"},
+        {"title": "Reading 2", "content": "Content of Reading 2"}
+    ]
+    return render_template('view_readings.html', user=current_user, readings=readings)

@@ -3,6 +3,7 @@ from .models import Member, User, Admin, Event  # Import the new Event model
 from . import db
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 auth = Blueprint('auth', __name__)
 
@@ -77,9 +78,9 @@ def admin_login():
 
         admin = Admin.query.filter_by(email=email).first()
         if admin and check_password_hash(admin.password, password):
-            login_user(admin, remember=True)
+            login_user(admin, remember=True)  # Log in the admin
             flash('Admin login successful!', category='success')
-            return redirect(url_for('auth.admin_activities'))
+            return redirect(url_for('auth.admin_activities'))  # Redirect to admin activities
         else:
             flash('Invalid email or password.', category='error')
 
@@ -126,41 +127,60 @@ def admin_signup():
     return render_template('admin_signup.html', user=current_user)
 
 @auth.route('/admin_logout', methods=['GET'], endpoint='admin_logout')
+@login_required
 def admin_logout():
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     logout_user()
     flash('Admin logged out successfully!', category='info')
     return redirect(url_for('auth.admin_login'))
 
 @auth.route('/admin_activities', endpoint='admin_activities')
+@login_required
 def admin_activities():
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
     return render_template('admin_activities.html', user=current_user)
 
 @auth.route('/add_event', methods=['GET', 'POST'], endpoint='add_event')
+@login_required
 def add_event():
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     if request.method == 'POST':
         title = request.form.get('title')
-        theme = request.form.get('theme')  # New field for event theme
-        involved = request.form.get('involved')  # New field for who is involved
-        venue = request.form.get('venue')  # New field for venue
+        theme = request.form.get('theme')
+        involved = request.form.get('involved')
+        venue = request.form.get('venue')
         date = request.form.get('date')
 
-        # Create a new event with the additional fields
-        new_event = Event(
-            title=title,
-            theme=theme,
-            involved=involved,
-            venue=venue,
-            date=date,
-            user_id=current_user.id
-        )
-        db.session.add(new_event)
-        try:
-            db.session.commit()
-            flash('Event added successfully!', category='success')
-            return redirect(url_for('auth.admin_activities'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'An error occurred: {str(e)}', category='error')
+        if not title or not theme or not involved or not venue or not date:
+            flash('All fields are required!', category='error')
+        else:
+            try:
+                new_event = Event(
+                    title=title,
+                    theme=theme,
+                    involved=involved,
+                    venue=venue,
+                    date=datetime.strptime(date, '%Y-%m-%d'),
+                    user_id=None  # Admin is adding the event
+                )
+                db.session.add(new_event)
+                db.session.commit()
+                flash('Event added successfully!', category='success')
+                return redirect(url_for('auth.manage_events'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'An error occurred: {str(e)}', category='error')
 
     return render_template('add_event.html', user=current_user)
 
@@ -230,7 +250,13 @@ def manage_members():
     )
 
 @auth.route('/edit_member/<int:member_id>', methods=['GET', 'POST'], endpoint='edit_member')
+@login_required
 def edit_member(member_id):
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     member = Member.query.get_or_404(member_id)
 
     if request.method == 'POST':
@@ -253,7 +279,13 @@ def edit_member(member_id):
     return render_template('edit_member.html', member=member, user=current_user)
 
 @auth.route('/delete_member/<int:member_id>', methods=['POST'], endpoint='delete_member')
+@login_required
 def delete_member(member_id):
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     member = Member.query.get_or_404(member_id)
 
     try:
@@ -279,6 +311,11 @@ def manage_events():
 @auth.route('/edit_event/<int:event_id>', methods=['GET', 'POST'], endpoint='edit_event')
 @login_required
 def edit_event(event_id):
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     event = Event.query.get_or_404(event_id)
 
     if request.method == 'POST':
@@ -301,6 +338,11 @@ def edit_event(event_id):
 @auth.route('/delete_event/<int:event_id>', methods=['POST'], endpoint='delete_event')
 @login_required
 def delete_event(event_id):
+    # Ensure only admins can access this route
+    if current_user.__class__.__name__ != 'Admin':
+        flash('Access denied.', category='error')
+        return redirect(url_for('views.home'))
+
     event = Event.query.get_or_404(event_id)
 
     try:
