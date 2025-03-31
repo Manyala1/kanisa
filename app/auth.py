@@ -189,6 +189,31 @@ def add_member():
 
     return render_template('sign_up.html', user=current_user)
 
-@auth.route('/manage_members', endpoint='manage_members')
+@auth.route('/manage_members', methods=['GET', 'POST'], endpoint='manage_members')
 def manage_members():
-    return render_template('manage_members.html', user=current_user)
+    search_query = request.args.get('search', '').strip()
+    sort_by = request.args.get('sort_by', 'outstation')  # Default sort by outstation
+
+    if search_query:
+        # Search members by ZAQ number
+        members = Member.query.filter(Member.zaq_number.like(f"%{search_query}%")).all()
+    else:
+        # Sort members by outstation or zone
+        if sort_by == 'zone':
+            members = Member.query.order_by(Member.zone).all()
+        else:  # Default to sorting by outstation
+            members = Member.query.order_by(Member.outstation).all()
+
+    # Count members by outstation and zone
+    outstation_counts = db.session.query(Member.outstation, db.func.count(Member.id)).group_by(Member.outstation).all()
+    zone_counts = db.session.query(Member.zone, db.func.count(Member.id)).group_by(Member.zone).all()
+
+    return render_template(
+        'manage_members.html',
+        user=current_user,
+        members=members,
+        outstation_counts=outstation_counts,
+        zone_counts=zone_counts,
+        search_query=search_query,
+        sort_by=sort_by
+    )

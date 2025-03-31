@@ -3,7 +3,61 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Manage Members</h2>
-    <p>Here you can view, edit, or delete members.</p>
-    <!-- Add functionality to list and manage members -->
+
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('auth.manage_members') }}" class="form-inline mb-3">
+        <input type="text" name="search" class="form-control mr-2" placeholder="Search by ZAQ Number" value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <!-- Sorting Options -->
+    <div class="mb-3">
+        <a href="{{ url_for('auth.manage_members', sort_by='outstation') }}" class="btn btn-secondary {% if sort_by == 'outstation' %}active{% endif %}">Sort by Outstation</a>
+        <a href="{{ url_for('auth.manage_members', sort_by='zone') }}" class="btn btn-secondary {% if sort_by == 'zone' %}active{% endif %}">Sort by Zone</a>
+    </div>
+
+    <!-- Member Counts -->
+    <div class="mb-3">
+        <h5>Member Counts by Outstation</h5>
+        <ul>
+            {% for outstation, count in outstation_counts %}
+                <li>{{ outstation }}: {{ count }} members</li>
+            {% endfor %}
+        </ul>
+        <h5>Member Counts by Zone</h5>
+        <ul>
+            {% for zone, count in zone_counts %}
+                <li>{{ zone }}: {{ count }} members</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Member List -->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ZAQ Number</th>
+                <th>Full Name</th>
+                <th>Phone Number</th>
+                <th>Jumuiya</th>
+                <th>Outstation</th>
+                <th>Center</th>
+                <th>Zone</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.zaq_number }}</td>
+                    <td>{{ member.full_name }}</td>
+                    <td>{{ member.phone_number }}</td>
+                    <td>{{ member.jumuiya }}</td>
+                    <td>{{ member.outstation }}</td>
+                    <td>{{ member.center }}</td>
+                    <td>{{ member.zone }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
