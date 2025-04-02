@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from .models import Member, Event
+from .api_utils import fetch_daily_readings  # Import the updated utility function
 from . import db
 from datetime import datetime
 
@@ -110,9 +111,8 @@ def view_events():
 @views.route('/view_readings', methods=['GET'], endpoint='view_readings')
 @login_required
 def view_readings():
-    # Placeholder for fetching readings (replace with actual logic)
-    readings = [
-        {"title": "Reading 1", "content": "Content of Reading 1"},
-        {"title": "Reading 2", "content": "Content of Reading 2"}
-    ]
+    # Fetch daily readings using the Church Calendar API
+    readings = fetch_daily_readings()
+    if not readings:
+        flash("No daily readings available today. Please check back later.", category="info")
     return render_template('view_readings.html', user=current_user, readings=readings)

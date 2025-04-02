@@ -2,13 +2,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Readings</h2>
+    <h2>Daily Readings</h2>
     {% if readings %}
         <ul class="list-group">
             {% for reading in readings %}
                 <li class="list-group-item">
                     <h5>{{ reading.title }}</h5>
                     <p>{{ reading.content }}</p>
+                    <small><strong>Reference:</strong> {{ reading.reference }}</small>
                 </li>
             {% endfor %}
         </ul>
