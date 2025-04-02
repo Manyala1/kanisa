@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from .models import Member, Event
-from .api_utils import fetch_daily_readings  # Import the updated utility function
+from .api_utils import fetch_todays_readings  # Import the updated utility function
 from . import db
-from datetime import datetime
+from datetime import datetime, timedelta
 
 views = Blueprint('views', __name__)
 
@@ -111,8 +111,20 @@ def view_events():
 @views.route('/view_readings', methods=['GET'], endpoint='view_readings')
 @login_required
 def view_readings():
-    # Fetch daily readings using the Church Calendar API
-    readings = fetch_daily_readings()
+    # Fetch today's readings using the Universalis API
+    readings = fetch_todays_readings()
     if not readings:
         flash("No daily readings available today. Please check back later.", category="info")
+        return render_template('view_readings.html', user=current_user, readings=[])
+    return render_template('view_readings.html', user=current_user, readings=readings)
+
+@views.route('/view_tomorrow_readings', methods=['GET'], endpoint='view_tomorrow_readings')
+@login_required
+def view_tomorrow_readings():
+    # Calculate tomorrow's date in YYYY-MM-DD format
+    tomorrow_date = (datetime.utcnow() + timedelta(days=1)).strftime('%Y-%m-%d')
+    # Fetch tomorrow's readings using the Universalis API
+    readings = fetch_daily_readings(date=tomorrow_date)
+    if not readings:
+        flash("No readings available for tomorrow. Please check back later.", category="info")
     return render_template('view_readings.html', user=current_user, readings=readings)

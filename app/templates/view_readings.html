@@ -4,14 +4,24 @@
 <div class="container mt-4">
     <h2>Daily Readings</h2>
     {% if readings %}
+        <h4>{{ readings.date }}</h4>
+        <h5>{{ readings.liturgical_day }}</h5>
         <ul class="list-group">
-            {% for reading in readings %}
-                <li class="list-group-item">
-                    <h5>{{ reading.title }}</h5>
-                    <p>{{ reading.content }}</p>
-                    <small><strong>Reference:</strong> {{ reading.reference }}</small>
-                </li>
-            {% endfor %}
+            <li class="list-group-item">
+                <h5>First Reading</h5>
+                <p><strong>Reference:</strong> {{ readings.first_reading.reference }}</p>
+                <p>{{ readings.first_reading.content }}</p>
+            </li>
+            <li class="list-group-item">
+                <h5>Responsorial Psalm</h5>
+                <p><strong>Reference:</strong> {{ readings.responsorial_psalm.reference }}</p>
+                <p>{{ readings.responsorial_psalm.content }}</p>
+            </li>
+            <li class="list-group-item">
+                <h5>Gospel</h5>
+                <p><strong>Reference:</strong> {{ readings.gospel.reference }}</p>
+                <p>{{ readings.gospel.content }}</p>
+            </li>
         </ul>
     {% else %}
         <p>No readings available at the moment.</p>
