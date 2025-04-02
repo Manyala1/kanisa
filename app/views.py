@@ -111,20 +111,9 @@ def view_events():
 @views.route('/view_readings', methods=['GET'], endpoint='view_readings')
 @login_required
 def view_readings():
-    # Fetch today's readings using the Universalis API
+    # Fetch today's readings using the updated API utility
     readings = fetch_todays_readings()
     if not readings:
         flash("No daily readings available today. Please check back later.", category="info")
-        return render_template('view_readings.html', user=current_user, readings=[])
-    return render_template('view_readings.html', user=current_user, readings=readings)
-
-@views.route('/view_tomorrow_readings', methods=['GET'], endpoint='view_tomorrow_readings')
-@login_required
-def view_tomorrow_readings():
-    # Calculate tomorrow's date in YYYY-MM-DD format
-    tomorrow_date = (datetime.utcnow() + timedelta(days=1)).strftime('%Y-%m-%d')
-    # Fetch tomorrow's readings using the Universalis API
-    readings = fetch_daily_readings(date=tomorrow_date)
-    if not readings:
-        flash("No readings available for tomorrow. Please check back later.", category="info")
+        return render_template('view_readings.html', user=current_user, readings={})
     return render_template('view_readings.html', user=current_user, readings=readings)

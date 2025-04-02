@@ -14,5 +14,8 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_HTTPONLY = True
 
-    # Universalis API URL
-    UNIVERSALIS_API_URL = "https://universalis.com/api/v2/today"  # Replace with the correct Universalis API URL
+    # Church Calendar API URL
+    CHURCH_CALENDAR_API_URL = "http://calapi.inadiutorium.cz/api/v0/en/calendars/general-en"  # Base URL for Church Calendar API
+
+    # API.Bible key
+    API_BIBLE_KEY = os.getenv('API_BIBLE_KEY')  # Add your API.Bible key to the .env file
