@@ -6,7 +6,16 @@ from datetime import datetime
 
 views = Blueprint('views', __name__)
 
-@views.route('/', endpoint='home')
+@views.route('/', endpoint='landing')
+def landing():
+    # Render the landing page for unauthenticated users
+    if current_user.is_authenticated:
+        if current_user.__class__.__name__ == 'Admin':
+            return redirect(url_for('auth.admin_activities'))
+        return redirect(url_for('views.home'))
+    return render_template('base.html')  # Show only the 3 routes for unauthenticated users
+
+@views.route('/home', endpoint='home')
 @login_required
 def home():
     # Redirect admins to the admin activities page
