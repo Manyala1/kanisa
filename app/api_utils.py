@@ -101,12 +101,12 @@ def send_sms_notification(to_phone_number, message_body):
     """
     try:
         # Twilio credentials from the app configuration
-        account_sid = current_app.config.get("ACa6b2e8cc89212dc5a7d29bbb20964f5e")
-        auth_token = current_app.config.get("e08c0380135eb6305e311cc463a6ac24")
-        from_phone_number = current_app.config.get("+19207648987")
+        account_sid = current_app.config.get("")
+        auth_token = current_app.config.get("")
+        from_phone_number = current_app.config.get("")
 
         if not all([account_sid, auth_token, from_phone_number]):
-            current_app.logger.error("Twilio credentials are not properly configured.")
+            current_app.logger.error("")
             return False
 
         client = Client(account_sid, auth_token)
