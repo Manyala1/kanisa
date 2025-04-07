@@ -1,5 +1,5 @@
 import requests
-from flask import current_app, Blueprint, jsonify
+from flask import current_app
 from datetime import datetime
 
 def fetch_todays_readings():
@@ -10,9 +10,13 @@ def fetch_todays_readings():
     calendar_url = f"http://calapi.inadiutorium.cz/api/v0/en/calendars/general-en/{year}/{month}/{day}"
     
     try:
+        current_app.logger.info(f"Fetching calendar data from {calendar_url}")
         calendar_response = requests.get(calendar_url, timeout=10)
         calendar_response.raise_for_status()
         calendar_data = calendar_response.json()
+
+        # Log the raw calendar data for debugging
+        current_app.logger.debug(f"Calendar API response: {calendar_data}")
 
         # Extract liturgical day
         celebrations = calendar_data.get("celebrations", [{}])
@@ -27,6 +31,9 @@ def fetch_todays_readings():
 
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"Failed to fetch calendar data from {calendar_url}: {e}")
+        return None
+    except ValueError as e:
+        current_app.logger.error(f"Failed to parse calendar API response: {e}")
         return None
 
     # Step 2: Fetch readings content from API.Bible
@@ -87,15 +94,3 @@ def get_readings_for_chat():
         f"{readings['gospel']['content']}"
     )
     return chat_message
-
-api_blueprint = Blueprint('api', __name__)
-
-@api_blueprint.route('/api/readings', methods=['GET'])
-def api_fetch_readings():
-    """
-    API endpoint to fetch today's readings.
-    """
-    readings = fetch_todays_readings()
-    if not readings:
-        return jsonify({"error": "Failed to fetch today's readings"}), 500
-    return jsonify(readings)
