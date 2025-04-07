@@ -1,5 +1,5 @@
 import requests
-from flask import current_app
+from flask import current_app, Blueprint, jsonify
 from datetime import datetime
 
 def fetch_todays_readings():
@@ -87,3 +87,15 @@ def get_readings_for_chat():
         f"{readings['gospel']['content']}"
     )
     return chat_message
+
+api_blueprint = Blueprint('api', __name__)
+
+@api_blueprint.route('/api/readings', methods=['GET'])
+def api_fetch_readings():
+    """
+    API endpoint to fetch today's readings.
+    """
+    readings = fetch_todays_readings()
+    if not readings:
+        return jsonify({"error": "Failed to fetch today's readings"}), 500
+    return jsonify(readings)
