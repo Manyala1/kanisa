@@ -67,3 +67,23 @@ def fetch_todays_readings():
                 # Keep "N/A" as fallback if a reading fails
 
     return formatted_readings
+
+def get_readings_for_chat():
+    """
+    Fetch and format today's readings for chat display.
+    """
+    readings = fetch_todays_readings()
+    if not readings:
+        return "Sorry, I couldn't fetch today's readings. Please try again later."
+
+    chat_message = (
+        f"📅 Date: {readings['date']}\n"
+        f"🙏 Liturgical Day: {readings['liturgical_day']}\n\n"
+        f"📖 First Reading ({readings['first_reading']['reference']}):\n"
+        f"{readings['first_reading']['content']}\n\n"
+        f"🎵 Responsorial Psalm ({readings['responsorial_psalm']['reference']}):\n"
+        f"{readings['responsorial_psalm']['content']}\n\n"
+        f"📖 Gospel ({readings['gospel']['reference']}):\n"
+        f"{readings['gospel']['content']}"
+    )
+    return chat_message

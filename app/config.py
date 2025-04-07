@@ -15,7 +15,7 @@ class Config:
     REMEMBER_COOKIE_HTTPONLY = True
 
     # Church Calendar API URL
-    CHURCH_CALENDAR_API_URL = "http://calapi.inadiutorium.cz/api/v0/en/calendars/general-en"  # Base URL for Church Calendar API
+    CHURCH_CALENDAR_API_URL = "http://calapi.inadiutorium.cz/api/v0/en/calendars/general-en" 
 
     # API.Bible key
     API_BIBLE_KEY = os.getenv('API_BIBLE_KEY')

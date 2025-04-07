@@ -22,7 +22,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User, Member, Admin  # Import specific models needed
+    from .models import User, Member, Admin 
     
     # Create the instance folder if it doesn't exist
     os.makedirs('instance', exist_ok=True)
