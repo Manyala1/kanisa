@@ -355,4 +355,12 @@ def delete_event(event_id):
 
     return redirect(url_for('auth.manage_events'))
 
+@auth.route('/get_started', methods=['GET'])
+def get_started():
+    return render_template('get_started.html')
+
+@auth.route('/routes_page', methods=['GET'])
+def routes_page():
+    return render_template('base.html')
+
 

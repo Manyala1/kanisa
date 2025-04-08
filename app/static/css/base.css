@@ -1,0 +1,81 @@
+/* General Reset */
+body, h1, h2, h3, p, ul, li, a {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+}
+
+/* Body Styling */
+body {
+    background-color: #f4f4f9;
+    color: #333;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+/* Header Styling */
+header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header nav ul {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+header nav ul li {
+    list-style: none;
+}
+
+header nav ul li a {
+    color: white;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+header nav ul li a:hover {
+    background-color: #45a049;
+}
+
+/* Footer Styling */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+
+/* Main Content Styling */
+main {
+    padding: 20px;
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Button Styling */
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}

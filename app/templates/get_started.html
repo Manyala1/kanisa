@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">About DigiChurch</h2>
+    <p class="text-center">DigiChurch is a platform designed to help church members stay connected, access daily readings, and view upcoming events. It serves as a digital bridge between the church and its congregation.</p>
+
+    <h4>Our Mission</h4>
+    <p>To provide a seamless digital experience for church members, making information easily accessible and enhancing community engagement.</p>
+
+    <h4>Features</h4>
+    <ul>
+        <li>Daily readings and reflections</li>
+        <li>Church events and announcements</li>
+        <li>Member registration and management</li>
+        <li>Secure login for both members and administrators</li>
+    </ul>
+
+    <h4>Contact Us</h4>
+    <p>Email: info@digichurch.com</p>
+    <p>Phone: +254 115307545</p>
+    <p>Address: Church Street, City, Country</p>
+
+    <a href="{{ url_for('views.landing') }}" class="btn btn-primary btn-lg mt-4">
+        Get Started <span>&#8594;</span>
+    </a>
+</div>
+{% endblock %}

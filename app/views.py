@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 views = Blueprint('views', __name__)
 
-@views.route('/', endpoint='landing')
+@views.route('/base', endpoint='base')
 def landing():
     # Render the landing page for unauthenticated users
     if current_user.is_authenticated:
@@ -121,3 +121,7 @@ def view_readings():
 @views.route('/about', methods=['GET'], endpoint='about')
 def about():
     return render_template('about.html')
+
+@views.route('/', endpoint='landing')
+def landing():
+    return render_template('get_started.html')
