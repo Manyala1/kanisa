@@ -101,9 +101,9 @@ def send_sms_notification(to_phone_number, message_body):
     """
     try:
         # Twilio credentials from the app configuration
-        account_sid = current_app.config.get("")
-        auth_token = current_app.config.get("")
-        from_phone_number = current_app.config.get("")
+        # account_sid = current_app.config.get("")
+        # auth_token = current_app.config.get("")
+        #from_phone_number = current_app.config.get("")
 
         if not all([account_sid, auth_token, from_phone_number]):
             current_app.logger.error("")
