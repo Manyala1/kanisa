@@ -117,3 +117,7 @@ def view_readings():
         flash("No daily readings available today. Please check back later.", category="info")
         return render_template('view_readings.html', user=current_user, readings={})
     return render_template('view_readings.html', user=current_user, readings=readings)
+
+@views.route('/about', methods=['GET'], endpoint='about')
+def about():
+    return render_template('about.html')

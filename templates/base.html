@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanisa</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                {% if request.endpoint != 'auth.login' %}
+                    <li><a href="{{ url_for('auth.login') }}">Member Login</a></li>
+                {% endif %}
+                {% if request.endpoint != 'auth.sign_up' %}
+                    <li><a href="{{ url_for('auth.sign_up') }}">Member Signup</a></li>
+                {% endif %}
+                {% if request.endpoint != 'auth.admin_dashboard' %}
+                    <li><a href="{{ url_for('auth.admin_dashboard') }}">Admin Dashboard</a></li>
+                {% endif %}
+                {% if request.endpoint != 'auth.about' %}
+                    <li><a href="{{ url_for('auth.about') }}">About</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer>
+        <p>&copy; 2023 Kanisa. All rights reserved.</p>
+    </footer>
+</body>
+</html>

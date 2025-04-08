@@ -354,3 +354,5 @@ def delete_event(event_id):
         flash(f'An error occurred: {str(e)}', category='error')
 
     return redirect(url_for('auth.manage_events'))
+
+
