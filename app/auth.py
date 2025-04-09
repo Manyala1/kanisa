@@ -7,6 +7,14 @@ from datetime import datetime
 
 auth = Blueprint('auth', __name__)
 
+@auth.route('/', methods=['GET'])
+def landing_page():
+    return render_template('about.html')
+
+@auth.route('/get_started', methods=['GET'])
+def get_started():
+    return render_template('base.html', show_content=True)
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -355,12 +363,6 @@ def delete_event(event_id):
 
     return redirect(url_for('auth.manage_events'))
 
-@auth.route('/get_started', methods=['GET'])
-def get_started():
-    return render_template('get_started.html')
 
-@auth.route('/routes_page', methods=['GET'])
-def routes_page():
-    return render_template('base.html')
 
 

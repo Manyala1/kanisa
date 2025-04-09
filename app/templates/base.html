@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DigiChurch</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
+    {% if show_nav %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{{ url_for('views.landing') }}">DigiChurch</a>
+        <a class="navbar-brand" href="{{ url_for('auth.landing_page') }}">DigiChurch</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 {% if not current_user.is_authenticated %}
-                    <!-- Guest links -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">Member Login</a>
                     </li>
@@ -27,11 +27,10 @@
                         <a class="nav-link" href="{{ url_for('auth.admin_login') }}">Admin Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('views.about') }}">About</a>
+                        <a class="nav-link" href="{{ url_for('auth.landing_page') }}">About</a>
                     </li>
                 {% else %}
                     {% if current_user.__class__.__name__ == 'Admin' %}
-                        <!-- Admin-specific links -->
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('auth.admin_activities') }}">Admin Activities</a>
                         </li>
@@ -39,9 +38,8 @@
                             <a class="nav-link" href="{{ url_for('auth.admin_logout') }}">Logout</a>
                         </li>
                     {% else %}
-                        <!-- Member-specific links -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('views.home') }}">Back</a>
+                            <a class="nav-link" href="{{ url_for('auth.landing_page') }}">Home</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
@@ -51,22 +49,7 @@
             </ul>
         </div>
     </nav>
-
-    <!-- Flash messages -->
-    <div class="container mt-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+    {% endif %}
 
     <div class="container mt-4">
         {% block content %}
@@ -76,6 +59,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
