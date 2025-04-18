@@ -33,7 +33,8 @@ def login():
         else:
             flash('Invalid ZAQ Number or phone number.', category='error')
 
-    return render_template('login.html', user=current_user)  # Ensure 'login.html' exists in the templates folder
+    # Render the login form for GET requests
+    return render_template('login.html', user=current_user)
 
 @auth.route('/logout')
 def logout():
@@ -95,7 +96,7 @@ def admin_login():
         else:
             flash('Invalid email or password.', category='error')
 
-    return render_template('admin_login.html', user=current_user)  # Ensure 'admin_login.html' exists in the templates folder
+    return render_template('admin_login.html', user=current_user)
 
 @auth.route('/admin_signup', methods=['GET', 'POST'], endpoint='admin_signup')
 def admin_signup():
