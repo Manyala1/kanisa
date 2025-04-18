@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
-    {% if show_nav %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="{{ url_for('auth.landing_page') }}">DigiChurch</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,40 +15,34 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
-                {% if not current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Member Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.sign_up') }}">Member Sign Up</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.admin_login') }}">Admin Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.landing_page') }}">About</a>
-                    </li>
-                {% else %}
-                    {% if current_user.__class__.__name__ == 'Admin' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.admin_activities') }}">Admin Activities</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.admin_logout') }}">Logout</a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.landing_page') }}">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-                        </li>
-                    {% endif %}
-                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">Member Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.sign_up') }}">Member Sign Up</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.admin_dashboard') }}">Admin Dashboard</a>
+                </li>
             </ul>
         </div>
     </nav>
-    {% endif %}
+
+    <div class="container mt-4">
+        <h2>Welcome to Kanisa</h2>
+        <p>Select an option below to get started:</p>
+        <ul class="list-group">
+            <li class="list-group-item">
+                <a href="{{ url_for('auth.login') }}">Member Login</a>
+            </li>
+            <li class="list-group-item">
+                <a href="{{ url_for('auth.sign_up') }}">Member Signup</a>
+            </li>
+            <li class="list-group-item">
+                <a href="{{ url_for('auth.admin') }}">Admin Dashboard</a>
+            </li>
+        </ul>
+    </div>
 
     <div class="container mt-4">
         {% block content %}

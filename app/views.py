@@ -124,8 +124,4 @@ def about():
 
 @views.route('/', endpoint='landing')
 def landing():
-    return render_template('get_started.html')
-
-@views.route('/main', endpoint='main')
-def main():
-    return render_template('main.html')
+    return render_template('base.html')

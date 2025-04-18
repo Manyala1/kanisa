@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from .models import Member, User, Admin, Event  # Import the new Event model
+from .models import Member, User, Admin, Event
 from . import db
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,11 +9,14 @@ auth = Blueprint('auth', __name__)
 
 @auth.route('/', methods=['GET'])
 def landing_page():
-    return render_template('about.html')
+    """
+    Render the landing page using about.html.
+    """
+    return render_template('about.html')  # Updated to render about.html
 
 @auth.route('/get_started', methods=['GET'])
 def get_started():
-    return render_template('base.html', show_content=True)
+    return render_template('base.html')  # Render base.html
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -26,11 +29,11 @@ def login():
         if member and member.phone_number == phone_number:
             login_user(member, remember=True)  # Log in the member
             flash('Login successful!', category='success')
-            return redirect(url_for('views.home'))  # Redirect to the member home page
+            return redirect(url_for('auth.admin'))  # Corrected endpoint name
         else:
             flash('Invalid ZAQ Number or phone number.', category='error')
 
-    return render_template('login.html', user=current_user)
+    return render_template('login.html', user=current_user)  # Ensure 'login.html' exists in the templates folder
 
 @auth.route('/logout')
 def logout():
@@ -72,9 +75,9 @@ def sign_up():
                 db.session.rollback()
                 flash(f'An error occurred: {str(e)}', category='error')
 
-    return render_template('sign_up.html', user=current_user)
+    return render_template('sign_up.html', user=current_user)  # Ensure 'sign_up.html' exists in the templates folder
 
-@auth.route('/admin', endpoint='admin')
+@auth.route('/admin_dashboard', endpoint='admin_dashboard')
 def admin_dashboard():
     return render_template('admin_dashboard.html')
 
@@ -92,7 +95,7 @@ def admin_login():
         else:
             flash('Invalid email or password.', category='error')
 
-    return render_template('admin_login.html', user=current_user)
+    return render_template('admin_login.html', user=current_user)  # Ensure 'admin_login.html' exists in the templates folder
 
 @auth.route('/admin_signup', methods=['GET', 'POST'], endpoint='admin_signup')
 def admin_signup():
@@ -362,6 +365,9 @@ def delete_event(event_id):
         flash(f'An error occurred: {str(e)}', category='error')
 
     return redirect(url_for('auth.manage_events'))
+
+
+
 
 
 
