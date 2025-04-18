@@ -27,27 +27,7 @@
             </ul>
         </div>
     </nav>
-
-    <div class="container mt-4">
-        <h2>Welcome to Kanisa</h2>
-        <p>Select an option below to get started:</p>
-        <ul class="list-group">
-            <li class="list-group-item">
-                <a href="{{ url_for('auth.login') }}">Member Login</a>
-            </li>
-            <li class="list-group-item">
-                <a href="{{ url_for('auth.sign_up') }}">Member Signup</a>
-            </li>
-            <li class="list-group-item">
-                <a href="{{ url_for('auth.admin') }}">Admin Dashboard</a>
-            </li>
-        </ul>
-    </div>
-
-    <div class="container mt-4">
-        {% block content %}
-        {% endblock %}
-    </div>
+    <div class="container mt-5">
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
