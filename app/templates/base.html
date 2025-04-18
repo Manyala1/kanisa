@@ -15,22 +15,6 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
-                {% if current_user.is_authenticated and current_user.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Admin Activities
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="adminDropdown">
-                            <a class="dropdown-item" href="{{ url_for('admin.add_event') }}">Add Event</a>
-                            <a class="dropdown-item" href="{{ url_for('admin.manage_events') }}">Manage Events</a>
-                            <a class="dropdown-item" href="{{ url_for('admin.add_member') }}">Add Member</a>
-                            <a class="dropdown-item" href="{{ url_for('admin.manage_members') }}">Manage Members</a>
-                        </div>
-                    </li>
-                {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">Member Login</a>
                     </li>
@@ -40,11 +24,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.admin_dashboard') }}">Admin Dashboard</a>
                     </li>
-                {% endif %}
             </ul>
         </div>
     </nav>
     <div class="container mt-5">
+        {% block content %}{% endblock %}
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>

@@ -33,8 +33,7 @@ def login():
         else:
             flash('Invalid ZAQ Number or phone number.', category='error')
 
-    # Render the login form for GET requests
-    return render_template('login.html', user=current_user)
+    return render_template('login.html', user=current_user) 
 
 @auth.route('/logout')
 def logout():
