@@ -41,10 +41,11 @@ def logout():
     flash('Logged out successfully!', category='info')
     return redirect(url_for('auth.login'))
 
-@auth.route('/sign_up', methods=['GET', 'POST'], endpoint='sign_up')
+@auth.route('/sign_up', methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
-        full_name = request.form.get('full name')
+        # Get form data
+        full_name = request.form.get('full_name')  # Updated from 'full name'
         zaq_number = request.form.get('zaq_number')
         jumuiya = request.form.get('jumuiya')
         outstation = request.form.get('outstation')
@@ -52,30 +53,37 @@ def sign_up():
         zone = request.form.get('zone')
         phone_number = request.form.get('phone_number')
 
+        # Validate required fields
+        if not all([full_name, zaq_number, phone_number]):
+            flash('Please fill in all required fields.', category='error')
+            return redirect(url_for('auth.sign_up'))
+
+        # Check for existing member
         existing_member = Member.query.filter_by(zaq_number=zaq_number).first()
         if existing_member:
             flash('ZAQ Number already exists!', category='error')
-        else:
+            return redirect(url_for('auth.sign_up'))
+
+        try:
             new_member = Member(
-                zaq_number=zaq_number,
                 full_name=full_name,
-                phone_number=phone_number,
+                zaq_number=zaq_number,
                 jumuiya=jumuiya,
                 outstation=outstation,
                 center=center,
                 zone=zone,
-                user_id=current_user.id if current_user.is_authenticated else None
+                phone_number=phone_number
             )
             db.session.add(new_member)
-            try:
-                db.session.commit()
-                flash('Signup successful! Please log in.', category='success')
-                return redirect(url_for('auth.login'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'An error occurred: {str(e)}', category='error')
+            db.session.commit()
+            flash('Sign up successful! Please log in.', category='success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred: {str(e)}', category='error')
+            return redirect(url_for('auth.sign_up'))
 
-    return render_template('sign_up.html', user=current_user)  # Ensure 'sign_up.html' exists in the templates folder
+    return render_template('sign_up.html', user=current_user)
 
 @auth.route('/admin_dashboard', endpoint='admin_dashboard')
 def admin_dashboard():
