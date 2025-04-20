@@ -1,22 +1,30 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="container mt-4">
     <h2>Admin Activities</h2>
-    <p>Welcome, {{ user.full_name }}! Choose an activity below:</p>
-    <ul class="list-group">
-        <li class="list-group-item">
-            <a href="{{ url_for('auth.add_member') }}">Add Member</a>
-        </li>
-        <li class="list-group-item">
-            <a href="{{ url_for('auth.manage_members') }}">Manage Members</a>
-        </li>
-        <li class="list-group-item">
-            <a href="{{ url_for('auth.add_event') }}">Add Event</a>
-        </li>
-        <li class="list-group-item">
-            <a href="{{ url_for('auth.manage_events') }}">Manage Events</a>
-        </li>
-    </ul>
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Event Management</h5>
+                    <a href="{{ url_for('auth.add_event') }}" class="btn btn-primary mb-2">Add Event</a>
+                    <a href="{{ url_for('auth.manage_events') }}" class="btn btn-info">Manage Events</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Member Management</h5>
+                    <a href="{{ url_for('auth.add_member') }}" class="btn btn-primary mb-2">Add Member</a>
+                    <a href="{{ url_for('auth.manage_members') }}" class="btn btn-info">Manage Members</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-3">
+        <a href="{{ url_for('auth.admin_logout') }}" class="btn btn-danger">Logout</a>
+    </div>
 </div>
 {% endblock %}

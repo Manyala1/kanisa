@@ -29,7 +29,7 @@ def login():
         if member and member.phone_number == phone_number:
             login_user(member, remember=True)  # Log in the member
             flash('Login successful!', category='success')
-            return redirect(url_for('auth.admin'))  # Corrected endpoint name
+            return redirect(url_for('auth.member_dashboard'))
         else:
             flash('Invalid ZAQ Number or phone number.', category='error')
 
@@ -97,9 +97,9 @@ def admin_login():
 
         admin = Admin.query.filter_by(email=email).first()
         if admin and check_password_hash(admin.password, password):
-            login_user(admin, remember=True)  # Log in the admin
+            login_user(admin, remember=True)
             flash('Admin login successful!', category='success')
-            return redirect(url_for('auth.admin_activities'))  # Redirect to admin activities
+            return redirect(url_for('auth.admin_activities'))
         else:
             flash('Invalid email or password.', category='error')
 
@@ -373,6 +373,25 @@ def delete_event(event_id):
         flash(f'An error occurred: {str(e)}', category='error')
 
     return redirect(url_for('auth.manage_events'))
+
+@auth.route('/member_dashboard')
+@login_required
+def member_dashboard():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    return render_template('member_dashboard.html')
+
+@auth.route('/view_events')
+@login_required
+def view_events():
+    events = Event.query.order_by(Event.date).all()
+    return render_template('view_events.html', events=events)
+
+@auth.route('/view_readings')
+@login_required
+def view_readings():
+    readings = Reading.query.order_by(Reading.date).all()  # Assuming you have a Reading model
+    return render_template('view_readings.html', readings=readings)
 
 
 

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Welcome, {{ current_user.full_name }}</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Church Events</h5>
+                    <a href="{{ url_for('auth.view_events') }}" class="btn btn-primary">View Events</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Daily Readings</h5>
+                    <a href="{{ url_for('auth.view_readings') }}" class="btn btn-primary">View Readings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Logout</a>
+</div>
+{% endblock %}
