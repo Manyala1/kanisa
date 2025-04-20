@@ -390,8 +390,7 @@ def view_events():
 @auth.route('/view_readings')
 @login_required
 def view_readings():
-    readings = Reading.query.order_by(Reading.date).all()  # Assuming you have a Reading model
-    return render_template('view_readings.html', readings=readings)
+    return render_template('view_readings.html')
 
 
 
