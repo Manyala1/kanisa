@@ -45,7 +45,7 @@ def logout():
 def sign_up():
     if request.method == 'POST':
         # Get form data
-        full_name = request.form.get('full_name')  # Updated from 'full name'
+        full_name = request.form.get('full_name')  
         zaq_number = request.form.get('zaq_number')
         jumuiya = request.form.get('jumuiya')
         outstation = request.form.get('outstation')
