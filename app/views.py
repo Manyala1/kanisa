@@ -60,7 +60,7 @@ def add_member():
 @login_required
 def add_event():
     # Ensure only admins can access this route
-    if current_user.__class__.__name__ != 'Admin':
+    if not current_user.is_admin:
         flash('Access denied.', category='error')
         return redirect(url_for('views.home'))
 
@@ -70,20 +70,29 @@ def add_event():
         venue = request.form.get('venue')
         theme = request.form.get('theme')
         involved = request.form.get('involved')
-    
 
         if not title or not date_str or not venue or not theme or not involved:
             flash('All fields are required!', category='error')
         else:
             try:
-                date = datetime.strptime(date_str, '%Y-%m-%d')
+                # Convert string date to datetime object
+                event_date = datetime.strptime(date_str, '%Y-%m-%d')
+                
+                # Get today's date with time set to midnight for comparison
+                today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                
+                # Check if event date is before today
+                if event_date < today:
+                    flash('Event date cannot be in the past!', category='error')
+                    return render_template('add_event.html', user=current_user)
+
                 new_event = Event(
                     title=title,
-                    date=date,
+                    date=event_date,
                     venue=venue,
                     theme=theme,
                     involved=involved,
-                    admin_id = current_user.id
+                    admin_id=current_user.id
                 )
                 db.session.add(new_event)
                 db.session.commit()
@@ -91,6 +100,9 @@ def add_event():
                 return redirect(url_for('auth.manage_events'))
             except ValueError:
                 flash('Invalid date format! Use YYYY-MM-DD', category='error')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding event: {str(e)}', category='error')
 
     return render_template('add_event.html', user=current_user)
 
