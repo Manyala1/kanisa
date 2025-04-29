@@ -23,6 +23,7 @@ class Admin(db.Model, UserMixin):
     phone_number = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(150), nullable=False)  # Store hashed passwords
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())  # Track admin creation time
+
     def get_id(self):
         return str(self.id)
     
@@ -38,6 +39,8 @@ class Event(db.Model):
     theme = db.Column(db.String(150), nullable=False)
     involved = db.Column(db.String(150), nullable=False)
     venue = db.Column(db.String(150), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now())  # Track event creation time
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.now())  # Track event update time
 
 class Member(db.Model, UserMixin):  # Inherit from UserMixin
     is_admin = db.Column(db.Boolean, default=False)  # Default to False for members
