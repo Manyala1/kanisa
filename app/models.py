@@ -39,8 +39,8 @@ class Event(db.Model):
     theme = db.Column(db.String(150), nullable=False)
     involved = db.Column(db.String(150), nullable=False)
     venue = db.Column(db.String(150), nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=func.now())  # Track event creation time
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=func.now())  # Track event update time
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
 class Member(db.Model, UserMixin):  # Inherit from UserMixin
     is_admin = db.Column(db.Boolean, default=False)  # Default to False for members
