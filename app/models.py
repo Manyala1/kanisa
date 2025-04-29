@@ -23,6 +23,12 @@ class Admin(db.Model, UserMixin):
     phone_number = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(150), nullable=False)  # Store hashed passwords
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())  # Track admin creation time
+    def get_id(self):
+        return str(self.id)
+    
+    @property
+    def is_admin(self):
+        return True
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +40,7 @@ class Event(db.Model):
     venue = db.Column(db.String(150), nullable=False)
 
 class Member(db.Model, UserMixin):  # Inherit from UserMixin
+    is_admin = db.Column(db.Boolean, default=False)  # Default to False for members
     id = db.Column(db.Integer, primary_key=True)
     zaq_number = db.Column(db.String(50), unique=True, nullable=False)  
     full_name = db.Column(db.String(150), nullable=False)  
@@ -43,3 +50,10 @@ class Member(db.Model, UserMixin):  # Inherit from UserMixin
     center = db.Column(db.String(150), nullable=False)
     zone = db.Column(db.String(150), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Add foreign key
+    
+    def get_id(self):
+        return str(self.id)
+    
+    @property
+    def is_member(self):
+        return False
