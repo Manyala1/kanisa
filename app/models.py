@@ -1,28 +1,14 @@
 from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func
 from datetime import datetime
-
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(150), nullable=False)
-    phone_number = db.Column(db.String(20), nullable=False)
-    zaq_number = db.Column(db.String(50), unique=True, nullable=False)
-    jumuiya = db.Column(db.String(150), nullable=False)
-    outstation = db.Column(db.String(150), nullable=False)
-    center = db.Column(db.String(150), nullable=False)
-    zone = db.Column(db.String(150), nullable=False)
-    # Add relationships
-    events = db.relationship('Event', backref='user', lazy=True)
-    members = db.relationship('Member', backref='user', lazy=True)
 
 class Admin(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)  # Admin login uses email
+    email = db.Column(db.String(150), unique=True, nullable=False)
     full_name = db.Column(db.String(150), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
-    password = db.Column(db.String(150), nullable=False)  # Store hashed passwords
-    created_at = db.Column(db.DateTime(timezone=True), default=func.now())  # Track admin creation time
+    password = db.Column(db.String(150), nullable=False)
+    events = db.relationship('Event', backref='admin', lazy=True)
 
     def get_id(self):
         return str(self.id)
@@ -31,32 +17,28 @@ class Admin(db.Model, UserMixin):
     def is_admin(self):
         return True
 
-class Event(db.Model):
+class Member(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
-    date = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    theme = db.Column(db.String(150), nullable=False)
-    involved = db.Column(db.String(150), nullable=False)
-    venue = db.Column(db.String(150), nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
-    updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-class Member(db.Model, UserMixin):  # Inherit from UserMixin
-    is_admin = db.Column(db.Boolean, default=False)  # Default to False for members
-    id = db.Column(db.Integer, primary_key=True)
-    zaq_number = db.Column(db.String(50), unique=True, nullable=False)  
-    full_name = db.Column(db.String(150), nullable=False)  
-    phone_number = db.Column(db.String(20), nullable=False)  
+    zaq_number = db.Column(db.String(50), unique=True, nullable=False)
+    full_name = db.Column(db.String(150), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
     jumuiya = db.Column(db.String(150), nullable=False)
     outstation = db.Column(db.String(150), nullable=False)
     center = db.Column(db.String(150), nullable=False)
     zone = db.Column(db.String(150), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Add foreign key
-    
+
     def get_id(self):
         return str(self.id)
     
     @property
-    def is_member(self):
+    def is_admin(self):
         return False
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    date = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    theme = db.Column(db.String(150), nullable=False)
+    involved = db.Column(db.String(150), nullable=False)
+    venue = db.Column(db.String(150), nullable=False)
+    #created_by = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
