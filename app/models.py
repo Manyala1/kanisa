@@ -8,7 +8,8 @@ class Admin(db.Model, UserMixin):
     full_name = db.Column(db.String(150), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    events = db.relationship('Event', backref='admin', lazy=True)
+    # Define relationship after Event model has admin_id foreign key
+    events = db.relationship('Event', backref='created_by_admin', lazy=True)
 
     def get_id(self):
         return str(self.id)
@@ -41,4 +42,4 @@ class Event(db.Model):
     theme = db.Column(db.String(150), nullable=False)
     involved = db.Column(db.String(150), nullable=False)
     venue = db.Column(db.String(150), nullable=False)
-    #created_by = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)

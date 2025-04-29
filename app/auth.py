@@ -189,6 +189,7 @@ def add_event():
         involved = request.form.get('involved')
         venue = request.form.get('venue')
         date = request.form.get('date')
+        admin_id = current_user.id
 
         if not title or not theme or not involved or not venue or not date:
             flash('All fields are required!', category='error')

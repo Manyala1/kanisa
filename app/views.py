@@ -70,6 +70,7 @@ def add_event():
         venue = request.form.get('venue')
         theme = request.form.get('theme')
         involved = request.form.get('involved')
+    
 
         if not title or not date_str or not venue or not theme or not involved:
             flash('All fields are required!', category='error')
@@ -81,7 +82,8 @@ def add_event():
                     date=date,
                     venue=venue,
                     theme=theme,
-                    involved=involved
+                    involved=involved,
+                    admin_id = current_user.id
                 )
                 db.session.add(new_event)
                 db.session.commit()
