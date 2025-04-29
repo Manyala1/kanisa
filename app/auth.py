@@ -44,8 +44,7 @@ def logout():
 @auth.route('/sign_up', methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
-        # Get form data
-        full_name = request.form.get('full_name')  
+        full_name = request.form.get('full_name')
         zaq_number = request.form.get('zaq_number')
         jumuiya = request.form.get('jumuiya')
         outstation = request.form.get('outstation')
@@ -53,16 +52,16 @@ def sign_up():
         zone = request.form.get('zone')
         phone_number = request.form.get('phone_number')
 
-        # Validate required fields
+        # Validate input
         if not all([full_name, zaq_number, phone_number]):
-            flash('Please fill in all required fields.', category='error')
-            return redirect(url_for('auth.sign_up'))
+            flash('Required fields must be filled!', category='error')
+            return render_template('sign_up.html', user=current_user)
 
         # Check for existing member
         existing_member = Member.query.filter_by(zaq_number=zaq_number).first()
         if existing_member:
             flash('ZAQ Number already exists!', category='error')
-            return redirect(url_for('auth.sign_up'))
+            return render_template('sign_up.html', user=current_user)
 
         try:
             new_member = Member(
@@ -76,13 +75,14 @@ def sign_up():
             )
             db.session.add(new_member)
             db.session.commit()
-            flash('Sign up successful! Please log in.', category='success')
+            flash('Registration successful! Please login.', category='success')
             return redirect(url_for('auth.login'))
         except Exception as e:
             db.session.rollback()
             flash(f'An error occurred: {str(e)}', category='error')
-            return redirect(url_for('auth.sign_up'))
+            return render_template('sign_up.html', user=current_user)
 
+    # GET request - display the form
     return render_template('sign_up.html', user=current_user)
 
 @auth.route('/admin_dashboard', endpoint='admin_dashboard')
@@ -91,6 +91,10 @@ def admin_dashboard():
 
 @auth.route('/admin_login', methods=['GET', 'POST'], endpoint='admin_login')
 def admin_login():
+    # Redirect if already logged in
+    if current_user.is_authenticated and current_user.__class__.__name__ == 'Admin':
+        return redirect(url_for('auth.admin_activities'))
+        
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -107,6 +111,10 @@ def admin_login():
 
 @auth.route('/admin_signup', methods=['GET', 'POST'], endpoint='admin_signup')
 def admin_signup():
+    # Redirect if admin is already logged in
+    if current_user.is_authenticated and current_user.__class__.__name__ == 'Admin':
+        return redirect(url_for('auth.admin_dashboard'))
+        
     if request.method == 'POST':
         full_name = request.form.get('full_name')
         email = request.form.get('email')
@@ -143,6 +151,7 @@ def admin_signup():
                 db.session.rollback()
                 flash(f'An error occurred: {str(e)}', category='error')
 
+    # For GET requests, show the signup form
     return render_template('admin_signup.html', user=current_user)
 
 @auth.route('/admin_logout', methods=['GET'], endpoint='admin_logout')
@@ -160,10 +169,9 @@ def admin_logout():
 @auth.route('/admin_activities', endpoint='admin_activities')
 @login_required
 def admin_activities():
-    # Ensure only admins can access this route
-    if current_user.__class__.__name__ != 'Admin':
-        flash('Access denied.', category='error')
-        return redirect(url_for('views.home'))
+    if not current_user.is_authenticated or current_user.__class__.__name__ != 'Admin':
+        flash('Access denied. Admin privileges required.', category='error')
+        return redirect(url_for('auth.admin_login'))
     return render_template('admin_activities.html', user=current_user)
 
 @auth.route('/add_event', methods=['GET', 'POST'], endpoint='add_event')
