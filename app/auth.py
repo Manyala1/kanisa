@@ -167,7 +167,6 @@ def admin_logout():
     return redirect(url_for('auth.admin_login'))
 
 @auth.route('/admin_activities', endpoint='admin_activities')
-@auth.route('/admin_activities')
 @login_required
 def admin_activities():
     if not current_user.is_authenticated or not current_user.is_admin:

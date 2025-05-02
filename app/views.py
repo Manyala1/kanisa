@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from .models import Member, Event
 from .api_utils import fetch_todays_readings  
 from . import db
 from datetime import datetime, timedelta
+import logging
+
 
 views = Blueprint('views', __name__)
 
@@ -113,35 +115,26 @@ def view_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('view_events.html', user=current_user, events=events)
 
+
 @views.route('/view_readings', methods=['GET'], endpoint='view_readings')
 @login_required
 def view_readings():
     try:
+        # Add debug logging
+        current_app.logger.debug("Attempting to fetch readings...")
         readings = fetch_todays_readings()
-    except Exception as e:
-        # Fallback readings if API fails
-        readings = {
-            'date': datetime.now().strftime('%A, %B %d, %Y'),
-            'liturgical_day': 'Daily Reading',
-            'first_reading': {
-                'reference': 'Acts 4:1-12',
-                'content': 'The priests and the captain of the temple guard and the Sadducees came up to Peter and John while they were speaking to the people...'
-            },
-            'second_reading': {
-                'reference': 'Revelation 1:9-11a, 12-13, 17-19',
-                'content': 'I, John, your brother and companion in the suffering and kingdom and patient endurance that are ours in Jesus...'
-            },
-            'responsorial_psalm': {
-                'reference': 'Psalm 118:1-2, 4, 22-27a',
-                'content': 'Give thanks to the LORD, for he is good; his love endures forever...'
-            },
-            'gospel': {
-                'reference': 'John 20:19-31',
-                'content': 'On the evening of that first day of the week, when the disciples were together, with the doors locked for fear of the Jewish leaders...'
-            }
-        }
+        current_app.logger.debug(f"Received readings: {readings}")
         
-    return render_template('view_readings.html', readings=readings)
+        # Validate the readings data structure
+        if not all(key in readings for key in ['date', 'liturgical_day', 'first_reading', 'second_reading', 'responsorial_psalm', 'gospel']):
+            raise ValueError("Incomplete readings data received from API")
+            
+        return render_template('view_readings.html', readings=readings)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching readings: {str(e)}")
+        flash('Unable to fetch today\'s readings. Please try again later.', 'error')
+        return redirect(url_for('views.home'))
 
 @views.route('/about', methods=['GET'], endpoint='about')
 def about():
