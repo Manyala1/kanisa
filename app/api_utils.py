@@ -1,6 +1,6 @@
 import requests
-from flask import current_app
 from datetime import datetime, date
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from twilio.rest import Client
 
@@ -13,68 +13,65 @@ class Event(db.Model):
     time = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False)
 
+
 def fetch_todays_readings():
-    """Fetch today's liturgical calendar data and display readings directly."""
-    # Step 1: Fetch liturgical day from Church Calendar API
-    today = datetime.now()
-    year, month, day = today.year, today.month, today.day
-    calendar_url = f"http://calapi.inadiutorium.cz/api/v0/en/calendars/general-en/{year}/{month}/{day}"
-    
+    """
+    Fetch today's Catholic Mass readings from the Catholic Mass Readings API.
+    """
     try:
-        current_app.logger.info(f"Fetching calendar data from {calendar_url}")
-        calendar_response = requests.get(calendar_url, timeout=10)
-        calendar_response.raise_for_status()
-        calendar_data = calendar_response.json()
+        today = datetime.now().strftime('%Y-%m-%d')
+        API_URL = "http://localhost:8000/api/readings"  # Updated port to 8000
 
-        # Log the raw calendar data for debugging
-        current_app.logger.debug(f"Calendar API response: {calendar_data}")
+        # Log API request attempt
+        current_app.logger.info(f"Fetching readings from API for {today}")
 
-        # Extract liturgical day
-        celebrations = calendar_data.get("celebrations", [])
-        if not celebrations:
-            current_app.logger.warning("No celebrations found in calendar data.")
-            liturgical_day = "Unknown Liturgical Day"
-        else:
-            liturgical_day = celebrations[0].get("title", "Unknown Liturgical Day")
+        # Add timeout to prevent hanging
+        response = requests.get(f"{API_URL}/{today}", timeout=5)
+        response.raise_for_status()
+        
+        # Log raw response for debugging
+        current_app.logger.debug(f"API Response Status: {response.status_code}")
+        current_app.logger.debug(f"API Response: {response.text[:500]}...")  # Log first 500 chars
+        
+        readings_data = response.json()
 
-        # Extract readings references
-        readings_references = calendar_data.get("readings", {})
-        first_reading = readings_references.get("first_reading", "No reference available")
-        second_reading = readings_references.get("second_reading", "No reference available")
-        responsorial_psalm = readings_references.get("responsorial_psalm", "No reference available")
-        gospel = readings_references.get("gospel", "No reference available")
+        # Format readings data
+        formatted_readings = {
+            'date': today,
+            'liturgical_day': readings_data.get('liturgical_info', {}).get('season', 'Unknown Season'),
+            'first_reading': {
+                'reference': readings_data.get('readings', [{}])[0].get('source', 'No reference available'),
+                'content': "\n".join(readings_data.get('readings', [{}])[0].get('content', ['Reading not available']))
+            },
+            'second_reading': {
+                'reference': readings_data.get('readings', [{}])[1].get('source', 'No reference available'),
+                'content': "\n".join(readings_data.get('readings', [{}])[1].get('content', ['Reading not available']))
+            },
+            'responsorial_psalm': {
+                'reference': readings_data.get('readings', [{}])[2].get('source', 'No reference available'),
+                'content': "\n".join(readings_data.get('readings', [{}])[2].get('content', ['Psalm not available']))
+            },
+            'gospel': {
+                'reference': readings_data.get('readings', [{}])[3].get('source', 'No reference available'),
+                'content': "\n".join(readings_data.get('readings', [{}])[3].get('content', ['Gospel not available']))
+            }
+        }
 
-        # Log missing references for debugging
-        if first_reading == "No reference available":
-            current_app.logger.warning("First Reading is missing.")
-        if second_reading == "No reference available":
-            current_app.logger.warning("Second Reading is missing.")
-        if responsorial_psalm == "No reference available":
-            current_app.logger.warning("Responsorial Psalm is missing.")
-        if gospel == "No reference available":
-            current_app.logger.warning("Gospel is missing.")
+        current_app.logger.debug(f"Formatted readings: {formatted_readings}")
+        return formatted_readings
 
-    except requests.exceptions.RequestException as e:
-        current_app.logger.error(f"Failed to fetch calendar data from {calendar_url}: {e}")
+    except requests.ConnectionError:
+        current_app.logger.error("Failed to connect to Mass Readings API. Is it running?")
         return None
-    except ValueError as e:
-        current_app.logger.error(f"Failed to parse calendar API response: {e}")
+    except requests.Timeout:
+        current_app.logger.error("API request timed out")
         return None
-
-    # Step 2: Format readings for display
-    formatted_readings = {
-        "date": today.strftime("%A, %B %d, %Y"),
-        "liturgical_day": liturgical_day,
-        "first_reading": first_reading,
-        "second_reading": second_reading,
-        "responsorial_psalm": responsorial_psalm,
-        "gospel": gospel
-    }
-
-    # Log the final formatted readings for debugging
-    current_app.logger.debug(f"Formatted readings: {formatted_readings}")
-
-    return formatted_readings
+    except requests.RequestException as e:
+        current_app.logger.error(f"API Request failed: {str(e)}")
+        return None
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error: {str(e)}")
+        return None
 
 def get_readings_for_chat():
     """
@@ -87,26 +84,25 @@ def get_readings_for_chat():
     chat_message = (
         f"📅 Date: {readings['date']}\n"
         f"🙏 Liturgical Day: {readings['liturgical_day']}\n\n"
-        f"📖 First Reading:\n{readings['first_reading']}\n\n"
-        f"📖 Second Reading:\n{readings['second_reading']}\n\n"
-        f"🎵 Responsorial Psalm:\n{readings['responsorial_psalm']}\n\n"
-        f"📖 Gospel:\n{readings['gospel']}"
+        f"📖 First Reading ({readings['first_reading']['reference']}):\n{readings['first_reading']['content']}\n\n"
+        f"📖 Second Reading ({readings['second_reading']['reference']}):\n{readings['second_reading']['content']}\n\n"
+        f"🎵 Responsorial Psalm ({readings['responsorial_psalm']['reference']}):\n{readings['responsorial_psalm']['content']}\n\n"
+        f"📖 Gospel ({readings['gospel']['reference']}):\n{readings['gospel']['content']}"
     )
     return chat_message
 
-# Step 3: Send SMS notification using Twilio
 def send_sms_notification(to_phone_number, message_body):
     """
     Send an SMS notification using Twilio.
     """
     try:
         # Twilio credentials from the app configuration
-        account_sid = current_app.config.get("")
-        auth_token = current_app.config.get("")
-        from_phone_number = current_app.config.get("")
+        account_sid = current_app.config.get("TWILIO_ACCOUNT_SID")
+        auth_token = current_app.config.get("TWILIO_AUTH_TOKEN")
+        from_phone_number = current_app.config.get("TWILIO_PHONE_NUMBER")
 
         if not all([account_sid, auth_token, from_phone_number]):
-            current_app.logger.error("")
+            current_app.logger.error("Missing Twilio configuration")
             return False
 
         client = Client(account_sid, auth_token)
@@ -133,10 +129,10 @@ def notify_readings_via_sms(to_phone_number):
     message_body = (
         f"📅 {readings['date']}\n"
         f"🙏 {readings['liturgical_day']}\n\n"
-        f"📖 First Reading: {readings['first_reading']}\n"
-        f"📖 Second Reading: {readings['second_reading']}\n"
-        f"🎵 Responsorial Psalm: {readings['responsorial_psalm']}\n"
-        f"📖 Gospel: {readings['gospel']}"
+        f"📖 First Reading ({readings['first_reading']['reference']}): {readings['first_reading']['content']}\n"
+        f"📖 Second Reading ({readings['second_reading']['reference']}): {readings['second_reading']['content']}\n"
+        f"🎵 Responsorial Psalm ({readings['responsorial_psalm']['reference']}): {readings['responsorial_psalm']['content']}\n"
+        f"📖 Gospel ({readings['gospel']['reference']}): {readings['gospel']['content']}"
     )
     return send_sms_notification(to_phone_number, message_body)
 

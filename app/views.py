@@ -120,19 +120,26 @@ def view_events():
 @login_required
 def view_readings():
     try:
-        # Add debug logging
         current_app.logger.debug("Attempting to fetch readings...")
         readings = fetch_todays_readings()
-        current_app.logger.debug(f"Received readings: {readings}")
         
-        # Validate the readings data structure
-        if not all(key in readings for key in ['date', 'liturgical_day', 'first_reading', 'second_reading', 'responsorial_psalm', 'gospel']):
-            raise ValueError("Incomplete readings data received from API")
+        if not readings:
+            raise ValueError("No readings data received")
+            
+        # Log the received data for debugging
+        current_app.logger.debug(f"Received readings data: {readings}")
+        
+        # Validate required fields
+        required_keys = ['date', 'liturgical_day', 'first_reading', 'second_reading', 'responsorial_psalm', 'gospel']
+        missing_keys = [key for key in required_keys if key not in readings]
+        
+        if missing_keys:
+            raise ValueError(f"Missing required fields: {', '.join(missing_keys)}")
             
         return render_template('view_readings.html', readings=readings)
         
     except Exception as e:
-        current_app.logger.error(f"Error fetching readings: {str(e)}")
+        current_app.logger.error(f"Error in view_readings: {str(e)}")
         flash('Unable to fetch today\'s readings. Please try again later.', 'error')
         return redirect(url_for('views.home'))
 
