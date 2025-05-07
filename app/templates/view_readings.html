@@ -1,65 +1,47 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">Daily Readings</h2>
-            <p class="lead mb-0">{{ readings.date if readings.date else 'Today' }}</p>
-            <p class="text-white-50">{{ readings.liturgical_day }}</p>
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% else %}
+        <!-- Liturgical Calendar Section -->
+        <div class="card mb-4">
+            <div class="card-header {% if calendar_info.is_solemnity %}bg-danger text-white{% elif calendar_info.is_feast %}bg-warning{% else %}bg-light{% endif %}">
+                <h3 class="card-title mb-0">
+                    {{ calendar_info.date }}
+                    {% if calendar_info.is_solemnity %}
+                        <span class="badge badge-light">Solemnity</span>
+                    {% elif calendar_info.is_feast %}
+                        <span class="badge badge-light">Feast</span>
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <h4>{{ calendar_info.celebration }}</h4>
+                <p class="text-muted">{{ calendar_info.season }}</p>
+            </div>
         </div>
-        <div class="card-body">
-            {% if readings %}
-                <ul class="list-group">
-                    <!-- First Reading -->
-                    <li class="list-group-item">
-                        <h5 class="text-primary">First Reading</h5>
-                        <p><strong>Reference:</strong> {{ readings.first_reading.reference }}</p>
-                        <p>{{ readings.first_reading.content }}</p>
-                    </li>
-                    
-                    <!-- Second Reading -->
-                    <li class="list-group-item">
-                        <h5 class="text-primary">Second Reading</h5>
-                        <p><strong>Reference:</strong> {{ readings.second_reading.reference }}</p>
-                        <p>{{ readings.second_reading.content }}</p>
-                    </li>
-                    
-                    <!-- Responsorial Psalm -->
-                    <li class="list-group-item">
-                        <h5 class="text-primary">Responsorial Psalm</h5>
-                        <p><strong>Reference:</strong> {{ readings.responsorial_psalm.reference }}</p>
-                        <p>{{ readings.responsorial_psalm.content }}</p>
-                    </li>
-                    
-                    <!-- Gospel -->
-                    <li class="list-group-item">
-                        <h5 class="text-primary">Gospel</h5>
-                        <p><strong>Reference:</strong> {{ readings.gospel.reference }}</p>
-                        <p>{{ readings.gospel.content }}</p>
-                    </li>
-                </ul>
-            {% else %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> No readings available at the moment.
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-{% endblock %}
 
-{% block styles %}
-<style>
-    .list-group-item {
-        border-left: 4px solid #007bff;
-        margin-bottom: 1rem;
-    }
-    .card-header {
-        border-bottom: 3px solid #0056b3;
-    }
-    .text-primary {
-        margin-bottom: 1rem;
-    }
-</style>
+        <!-- Readings Section -->
+        <div class="readings-container">
+            {% for reading_type, reading in readings.readings.items() %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>{{ reading_type|replace('_', ' ')|title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ reading.reference }}</h6>
+                        {% for paragraph in reading.content %}
+                            <p>{{ paragraph }}</p>
+                        {% endfor %}
+                        {% if reading.response %}
+                            <p class="font-italic">Response: {{ reading.response }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

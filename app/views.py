@@ -124,24 +124,38 @@ def view_readings():
         readings = fetch_todays_readings()
         
         if not readings:
-            raise ValueError("No readings data received")
-            
+            current_app.logger.error("No readings data received from USCCB")
+            flash('Unable to fetch today\'s readings. Please try again later.', 'error')
+            return redirect(url_for('views.home'))
+        
         # Log the received data for debugging
         current_app.logger.debug(f"Received readings data: {readings}")
         
-        # Validate required fields
-        required_keys = ['date', 'liturgical_day', 'first_reading', 'second_reading', 'responsorial_psalm', 'gospel']
-        missing_keys = [key for key in required_keys if key not in readings]
-        
-        if missing_keys:
-            raise ValueError(f"Missing required fields: {', '.join(missing_keys)}")
+        # Validate the data structure
+        required_keys = ['date', 'liturgical_info', 'readings']
+        if not all(key in readings for key in required_keys):
+            raise ValueError("Invalid readings data structure")
             
-        return render_template('view_readings.html', readings=readings)
+        # Enhance liturgical information
+        liturgical_info = readings.get('liturgical_info', {})
+        calendar_info = {
+            'season': liturgical_info.get('season', 'Ordinary Time'),
+            'celebration': liturgical_info.get('celebration', ''),
+            'is_feast': 'feast' in (liturgical_info.get('celebration', '').lower()),
+            'is_solemnity': 'solemnity' in (liturgical_info.get('celebration', '').lower()),
+            'date': readings.get('date', datetime.now().strftime('%Y-%m-%d'))
+        }
+        
+        return render_template('view_readings.html', 
+                             readings=readings,
+                             calendar_info=calendar_info,
+                             error=None)
         
     except Exception as e:
         current_app.logger.error(f"Error in view_readings: {str(e)}")
-        flash('Unable to fetch today\'s readings. Please try again later.', 'error')
-        return redirect(url_for('views.home'))
+        return render_template('view_readings.html', 
+                             readings=None,
+                             error="Unable to fetch today's readings. Please try again later.")
 
 @views.route('/about', methods=['GET'], endpoint='about')
 def about():

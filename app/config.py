@@ -19,3 +19,8 @@ class Config:
 
     # API.Bible key
     API_BIBLE_KEY = os.getenv('API_BIBLE_KEY')
+    
+    class config:
+        TWILIO_ACCOUNT_SID = "ACa6b2e8cc89212dc5a7d29bbb20964f5e"
+        TWILIO_ACCOUNT_SID = "e08c0380135eb6305e311cc463a6ac24"
+        TWILIO_PHONE_NUMBER = "+19207648987"

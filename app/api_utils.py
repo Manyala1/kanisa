@@ -3,6 +3,7 @@ from datetime import datetime, date
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from twilio.rest import Client
+from bs4 import BeautifulSoup
 
 db = SQLAlchemy()
 
@@ -12,160 +13,150 @@ class Event(db.Model):
     title = db.Column(db.String(255), nullable=False)
     time = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False)
-
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
+    
+def send_sms_notification(to_phone_number, message):
+    """Send SMS using Twilio client."""
+    try:
+        client = Client(
+            current_app.config.get('TWILIO_ACCOUNT_SID'),
+            current_app.config.get('TWILIO_AUTH_TOKEN')
+        )
+        
+        message = client.messages.create(
+            body=message,
+            from_=current_app.config.get('TWILIO_PHONE_NUMBER'),
+            to=to_phone_number
+        )
+        current_app.logger.info(f"SMS sent successfully. SID: {message.sid}")
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Failed to send SMS: {str(e)}")
+        return False
 
 def fetch_todays_readings():
-    """
-    Fetch today's Catholic Mass readings from the Catholic Mass Readings API.
-    """
+    """Fetch today's Catholic Mass readings from USCCB."""
     try:
-        today = datetime.now().strftime('%Y-%m-%d')
-        API_URL = "http://localhost:8000/api/readings"  # Updated port to 8000
-
-        # Log API request attempt
-        current_app.logger.info(f"Fetching readings from API for {today}")
-
-        # Add timeout to prevent hanging
-        response = requests.get(f"{API_URL}/{today}", timeout=5)
+        today = datetime.now().strftime('%Y%m%d')  # USCCB format: YYYYMMDD
+        API_URL = f"https://bible.usccb.org/bible/readings/{today}.cfm"
+        
+        current_app.logger.info(f"Fetching readings from USCCB for {today}")
+        
+        response = requests.get(API_URL, timeout=10)
         response.raise_for_status()
         
-        # Log raw response for debugging
-        current_app.logger.debug(f"API Response Status: {response.status_code}")
-        current_app.logger.debug(f"API Response: {response.text[:500]}...")  # Log first 500 chars
+        # Parse HTML response
+        soup = BeautifulSoup(response.text, 'html.parser')
         
-        readings_data = response.json()
-
-        # Format readings data
-        formatted_readings = {
-            'date': today,
-            'liturgical_day': readings_data.get('liturgical_info', {}).get('season', 'Unknown Season'),
-            'first_reading': {
-                'reference': readings_data.get('readings', [{}])[0].get('source', 'No reference available'),
-                'content': "\n".join(readings_data.get('readings', [{}])[0].get('content', ['Reading not available']))
-            },
-            'second_reading': {
-                'reference': readings_data.get('readings', [{}])[1].get('source', 'No reference available'),
-                'content': "\n".join(readings_data.get('readings', [{}])[1].get('content', ['Reading not available']))
-            },
-            'responsorial_psalm': {
-                'reference': readings_data.get('readings', [{}])[2].get('source', 'No reference available'),
-                'content': "\n".join(readings_data.get('readings', [{}])[2].get('content', ['Psalm not available']))
-            },
-            'gospel': {
-                'reference': readings_data.get('readings', [{}])[3].get('source', 'No reference available'),
-                'content': "\n".join(readings_data.get('readings', [{}])[3].get('content', ['Gospel not available']))
-            }
+        # Extract liturgical information
+        liturgical_info = {
+            'season': soup.find('span', class_='season').text.strip() if soup.find('span', class_='season') else '',
+            'celebration': soup.find('h2', class_='headline').text.strip() if soup.find('h2', class_='headline') else ''
         }
-
+        
+        # Extract readings
+        readings = {
+            'first_reading': _extract_reading(soup, 'reading-1'),
+            'responsorial_psalm': _extract_reading(soup, 'responsorial'),
+            'second_reading': _extract_reading(soup, 'reading-2'),
+            'gospel': _extract_reading(soup, 'gospel')
+        }
+        
+        formatted_readings = {
+            'date': datetime.now().strftime('%Y-%m-%d'),
+            'liturgical_info': liturgical_info,
+            'readings': readings
+        }
+        
         current_app.logger.debug(f"Formatted readings: {formatted_readings}")
         return formatted_readings
 
     except requests.ConnectionError:
-        current_app.logger.error("Failed to connect to Mass Readings API. Is it running?")
-        return None
-    except requests.Timeout:
-        current_app.logger.error("API request timed out")
-        return None
-    except requests.RequestException as e:
-        current_app.logger.error(f"API Request failed: {str(e)}")
+        current_app.logger.error("Failed to connect to USCCB website")
         return None
     except Exception as e:
-        current_app.logger.error(f"Unexpected error: {str(e)}")
+        current_app.logger.error(f"Error fetching readings: {str(e)}")
+        return None
+
+def _extract_reading(soup, reading_id):
+    """Helper function to extract reading content."""
+    reading_div = soup.find('div', id=reading_id)
+    if not reading_div:
+        return {
+            'reference': '',
+            'content': [],
+            'response': ''
+        }
+    
+    return {
+        'reference': reading_div.find('h3').text.strip() if reading_div.find('h3') else '',
+        'content': [p.text.strip() for p in reading_div.find_all('p', class_='content')],
+        'response': reading_div.find('p', class_='response').text.strip() if reading_div.find('p', class_='response') else ''
+    }
+
+def fetch_todays_events():
+    """Fetch today's church events."""
+    try:
+        events = Event.query.filter_by(date=date.today()).all()
+        return [{'time': event.time, 'title': event.title} for event in events]
+    except Exception as e:
+        current_app.logger.error(f"Error fetching events: {str(e)}")
         return None
 
 def get_readings_for_chat():
-    """
-    Fetch and format today's readings for chat display.
-    """
+    """Format today's readings for chat display."""
     readings = fetch_todays_readings()
     if not readings:
         return "Sorry, I couldn't fetch today's readings. Please try again later."
 
     chat_message = (
         f"📅 Date: {readings['date']}\n"
-        f"🙏 Liturgical Day: {readings['liturgical_day']}\n\n"
-        f"📖 First Reading ({readings['first_reading']['reference']}):\n{readings['first_reading']['content']}\n\n"
-        f"📖 Second Reading ({readings['second_reading']['reference']}):\n{readings['second_reading']['content']}\n\n"
-        f"🎵 Responsorial Psalm ({readings['responsorial_psalm']['reference']}):\n{readings['responsorial_psalm']['content']}\n\n"
-        f"📖 Gospel ({readings['gospel']['reference']}):\n{readings['gospel']['content']}"
+        f"🙏 Liturgical Day: {readings['liturgical_info']['celebration']}\n\n"
+        f"📖 First Reading ({readings['readings']['first_reading']['reference']}):\n"
+        f"{' '.join(readings['readings']['first_reading']['content'])}\n\n"
+        f"📖 Second Reading ({readings['readings']['second_reading']['reference']}):\n"
+        f"{' '.join(readings['readings']['second_reading']['content'])}\n\n"
+        f"🎵 Responsorial Psalm ({readings['readings']['responsorial_psalm']['reference']}):\n"
+        f"{' '.join(readings['readings']['responsorial_psalm']['content'])}\n\n"
+        f"📖 Gospel ({readings['readings']['gospel']['reference']}):\n"
+        f"{' '.join(readings['readings']['gospel']['content'])}"
     )
     return chat_message
 
-def send_sms_notification(to_phone_number, message_body):
-    """
-    Send an SMS notification using Twilio.
-    """
+def send_digichurch_notification(to_phone_number, notification_type='all'):
+    """Send DigiChurch notifications via SMS."""
     try:
-        # Twilio credentials from the app configuration
-        account_sid = current_app.config.get("TWILIO_ACCOUNT_SID")
-        auth_token = current_app.config.get("TWILIO_AUTH_TOKEN")
-        from_phone_number = current_app.config.get("TWILIO_PHONE_NUMBER")
-
-        if not all([account_sid, auth_token, from_phone_number]):
-            current_app.logger.error("Missing Twilio configuration")
+        message_parts = []
+        
+        if notification_type in ['readings', 'all']:
+            readings = fetch_todays_readings()
+            if readings:
+                message_parts.append(
+                    f"📖 TODAY'S READINGS - {readings['date']}\n"
+                    f"🙏 {readings['liturgical_info']['celebration']}\n\n"
+                    f"First Reading: {readings['readings']['first_reading']['reference']}\n"
+                    f"Second Reading: {readings['readings']['second_reading']['reference']}\n"
+                    f"Psalm: {readings['readings']['responsorial_psalm']['reference']}\n"
+                    f"Gospel: {readings['readings']['gospel']['reference']}"
+                )
+        
+        if notification_type in ['events', 'all']:
+            events = fetch_todays_events()
+            if events:
+                events_text = "\n\n📅 TODAY'S EVENTS:"
+                for event in events:
+                    events_text += f"\n⏰ {event['time']} - {event['title']}"
+                message_parts.append(events_text)
+        
+        if not message_parts:
+            current_app.logger.warning("No content available for notification")
             return False
-
-        client = Client(account_sid, auth_token)
-        message = client.messages.create(
-            body=message_body,
-            from_=from_phone_number,
-            to=to_phone_number
-        )
-        current_app.logger.info(f"SMS sent successfully to {to_phone_number}: {message.sid}")
-        return True
+            
+        full_message = "\n---\n".join(message_parts)
+        full_message += "\n\nSent via DigiChurch ✝️"
+        
+        return send_sms_notification(to_phone_number, full_message)
+        
     except Exception as e:
-        current_app.logger.error(f"Failed to send SMS to {to_phone_number}: {e}")
+        current_app.logger.error(f"Failed to send notification: {str(e)}")
         return False
-
-def notify_readings_via_sms(to_phone_number):
-    """
-    Fetch today's readings and send them via SMS.
-    """
-    readings = fetch_todays_readings()
-    if not readings:
-        current_app.logger.error("Failed to fetch readings for SMS notification.")
-        return False
-
-    message_body = (
-        f"📅 {readings['date']}\n"
-        f"🙏 {readings['liturgical_day']}\n\n"
-        f"📖 First Reading ({readings['first_reading']['reference']}): {readings['first_reading']['content']}\n"
-        f"📖 Second Reading ({readings['second_reading']['reference']}): {readings['second_reading']['content']}\n"
-        f"🎵 Responsorial Psalm ({readings['responsorial_psalm']['reference']}): {readings['responsorial_psalm']['content']}\n"
-        f"📖 Gospel ({readings['gospel']['reference']}): {readings['gospel']['content']}"
-    )
-    return send_sms_notification(to_phone_number, message_body)
-
-def fetch_todays_events():
-    """
-    Fetch today's events from the database.
-    """
-    try:
-        today = date.today()
-        events = Event.query.filter_by(date=today).all()
-        if not events:
-            current_app.logger.info("No events found for today.")
-            return []
-
-        formatted_events = [{"time": event.time, "title": event.title} for event in events]
-        current_app.logger.debug(f"Fetched events: {formatted_events}")
-        return formatted_events
-    except Exception as e:
-        current_app.logger.error(f"Failed to fetch events from the database: {e}")
-        return []
-
-def notify_events_via_sms(to_phone_number):
-    """
-    Fetch today's events and send them via SMS.
-    """
-    events = fetch_todays_events()
-    if not events:
-        current_app.logger.error("No events found for SMS notification.")
-        return False
-
-    # Format the events into a message body
-    message_body = "📅 Today's Events:\n"
-    for event in events:
-        message_body += f"⏰ {event['time']} - {event['title']}\n"
-
-    return send_sms_notification(to_phone_number, message_body)
