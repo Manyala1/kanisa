@@ -21,7 +21,6 @@ def home():
 @views.route('/add_member', methods=['GET', 'POST'])
 @login_required
 def add_member():
-    # Ensure only admins can access this route
     if current_user.__class__.__name__ != 'Admin':
         flash('Access denied.', category='error')
         return redirect(url_for('views.home'))
@@ -30,22 +29,41 @@ def add_member():
         zaq_number = request.form.get('zaq_number')
         full_name = request.form.get('full_name')
         phone_number = request.form.get('phone_number')
+        email = request.form.get('email')
         jumuiya = request.form.get('jumuiya')
         outstation = request.form.get('outstation')
         center = request.form.get('center')
         zone = request.form.get('zone')
 
-        if not zaq_number or not full_name or not phone_number:
-            flash('All fields are required!', category='error')
+        # Validate required fields
+        if not all([zaq_number, full_name, phone_number, email]):
+            flash('All fields marked with * are required!', category='error')
+            return render_template('add_member.html', user=current_user)
+
+        # Validate phone number format
+        if not phone_number.isdigit() or len(phone_number) != 10:
+            flash('Phone number must be exactly 10 digits!', category='error')
+            return render_template('add_member.html', user=current_user)
+
+        # Validate email format
+        if '@' not in email:
+            flash('Please enter a valid email address!', category='error')
+            return render_template('add_member.html', user=current_user)
+
+        # Check for existing member with same ZAQ, phone, or email
+        if Member.query.filter_by(zaq_number=zaq_number).first():
+            flash('ZAQ number already exists!', category='error')
+        elif Member.query.filter_by(phone_number=phone_number).first():
+            flash('Phone number already registered!', category='error')
+        elif Member.query.filter_by(email=email).first():
+            flash('Email already registered!', category='error')
         else:
-            existing_member = Member.query.filter_by(zaq_number=zaq_number).first()
-            if existing_member:
-                flash('ZAQ number already exists!', category='error')
-            else:
+            try:
                 new_member = Member(
                     zaq_number=zaq_number,
                     full_name=full_name,
                     phone_number=phone_number,
+                    email=email,
                     jumuiya=jumuiya,
                     outstation=outstation,
                     center=center,
@@ -54,7 +72,11 @@ def add_member():
                 db.session.add(new_member)
                 db.session.commit()
                 flash('Member added successfully!', category='success')
-                return redirect(url_for('auth.manage_members'))
+                return redirect(url_for('auth.admin_activities'))
+            except Exception as e:
+                db.session.rollback()
+                flash('Error adding member. Please try again.', category='error')
+                current_app.logger.error(f"Error adding member: {str(e)}")
 
     return render_template('add_member.html', user=current_user)
 

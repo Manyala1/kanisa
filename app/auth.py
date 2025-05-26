@@ -400,10 +400,3 @@ def view_events():
 @login_required
 def view_readings():
     return render_template('view_readings.html')
-
-
-
-
-
-
-

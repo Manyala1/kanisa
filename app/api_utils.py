@@ -3,7 +3,6 @@ from datetime import datetime, date
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from twilio.rest import Client
-from bs4 import BeautifulSoup
 
 db = SQLAlchemy()
 
@@ -35,53 +34,46 @@ def send_sms_notification(to_phone_number, message):
         return False
 
 def fetch_todays_readings():
-    """Fetch today's Catholic Mass readings from USCCB."""
+    """Fetch today's Catholic Mass readings from Universalis API."""
     try:
-        today = datetime.now().strftime('%Y%m%d')  # USCCB format: YYYYMMDD
-        API_URL = f"https://bible.usccb.org/bible/readings/{today}.cfm"
+        api_url = f"{current_app.config['UNIVERSALIS_API_URL']}/readings"
+        params = {'apikey': current_app.config['UNIVERSALIS_API_KEY']}
         
-        current_app.logger.info(f"Fetching readings from USCCB for {today}")
+        current_app.logger.info("Fetching readings from Universalis API")
         
-        response = requests.get(API_URL, timeout=10)
+        response = requests.get(api_url, params=params, timeout=10)
         response.raise_for_status()
         
-        # Parse HTML response
-        soup = BeautifulSoup(response.text, 'html.parser')
+        data = response.json()
         
-        # Extract liturgical information
-        liturgical_info = {
-            'season': soup.find('span', class_='season').text.strip() if soup.find('span', class_='season') else '',
-            'celebration': soup.find('h2', class_='headline').text.strip() if soup.find('h2', class_='headline') else ''
-        }
-        
-        # Extract readings
-        readings = {
-            'first_reading': _extract_reading(soup, 'reading-1'),
-            'responsorial_psalm': _extract_reading(soup, 'responsorial'),
-            'second_reading': _extract_reading(soup, 'reading-2'),
-            'gospel': _extract_reading(soup, 'gospel')
-        }
-        
+        # Format the readings data
         formatted_readings = {
             'date': datetime.now().strftime('%Y-%m-%d'),
-            'liturgical_info': liturgical_info,
-            'readings': readings
+            'liturgical_info': {
+                'season': data.get('season', ''),
+                'celebration': data.get('celebration', '')
+            },
+            'readings': {
+                'first_reading': _extract_reading(data.get('first_reading', {})),
+                'responsorial_psalm': _extract_reading(data.get('psalm', {})),
+                'second_reading': _extract_reading(data.get('second_reading', {})),
+                'gospel': _extract_reading(data.get('gospel', {}))
+            }
         }
         
         current_app.logger.debug(f"Formatted readings: {formatted_readings}")
         return formatted_readings
 
     except requests.ConnectionError:
-        current_app.logger.error("Failed to connect to USCCB website")
+        current_app.logger.error("Failed to connect to Universalis API")
         return None
     except Exception as e:
         current_app.logger.error(f"Error fetching readings: {str(e)}")
         return None
 
-def _extract_reading(soup, reading_id):
-    """Helper function to extract reading content."""
-    reading_div = soup.find('div', id=reading_id)
-    if not reading_div:
+def _extract_reading(reading_data):
+    """Helper function to extract reading content from Universalis API response."""
+    if not reading_data:
         return {
             'reference': '',
             'content': [],
@@ -89,9 +81,9 @@ def _extract_reading(soup, reading_id):
         }
     
     return {
-        'reference': reading_div.find('h3').text.strip() if reading_div.find('h3') else '',
-        'content': [p.text.strip() for p in reading_div.find_all('p', class_='content')],
-        'response': reading_div.find('p', class_='response').text.strip() if reading_div.find('p', class_='response') else ''
+        'reference': reading_data.get('reference', ''),
+        'content': reading_data.get('text', '').split('\n'),
+        'response': reading_data.get('response', '')
     }
 
 def fetch_todays_events():

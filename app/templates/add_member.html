@@ -1,24 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Add Member{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h1>Add Member</h1>
-        <form method="POST">
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" class="form-control" id="name" name="name" placeholder="Name" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email address</label>
-                <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
-            </div>
-            <div class="form-group">
-                <label for="phone">Phone</label>
-                <input type="text" class="form-control" id="phone" name="phone" placeholder="Phone" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Add Member</button>
-        </form>
-    </div>
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>Sign Up</h2>
+    <form method="POST" action="{{ url_for('auth.sign_up') }}">
+        <div class="form-group">
+            <label for="full_name">Full Name</label>
+            <input type="text" class="form-control" id="full_name" name="full_name" required>
+        </div>
+        <div class="form-group">
+            <label for="zaq_number">ZAQ Number</label>
+            <input type="text" class="form-control" id="zaq_number" name="zaq_number" required>
+        </div>
+        <div class="form-group">
+            <label for="jumuiya">Jumuiya</label>
+            <input type="text" class="form-control" id="jumuiya" name="jumuiya">
+        </div>
+        <div class="form-group">
+            <label for="outstation">Outstation</label>
+            <input type="text" class="form-control" id="outstation" name="outstation">
+        </div>
+        <div class="form-group">
+            <label for="center">Center</label>
+            <input type="text" class="form-control" id="center" name="center">
+        </div>
+        <div class="form-group">
+            <label for="zone">Zone</label>
+            <input type="text" class="form-control" id="zone" name="zone">
+        </div>
+        <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input type="text" class="form-control" id="phone_number" name="phone_number" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+    </form>
 </div>
 {% endblock %}
