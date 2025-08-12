@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from datetime import datetime
 
 class Admin(db.Model, UserMixin):
+    is_admin = db.Column(db.Boolean, default=True)
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     full_name = db.Column(db.String(150), nullable=False)

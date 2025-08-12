@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from .models import Member, Event
-from .api_utils import fetch_todays_readings  
+#from .api_utils import fetch_todays_readings  
 from . import db
 from datetime import datetime, timedelta
 import logging

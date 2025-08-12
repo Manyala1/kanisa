@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from .models import Member, Admin, Event
@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 auth = Blueprint('auth', __name__)
 limiter = Limiter(key_func=get_remote_address)
 
-# Config (assumed to be in config.py or hardcoded)
 class Config:
     MAX_ADMINS = 2
     PHONE_NUMBER_REGEX = r'^\+?\d{10,15}$'
@@ -40,411 +39,285 @@ class Config:
         'view_readings': 'view_readings.html'
     }
 
-# Helper function for phone number validation
 def is_valid_phone(phone):
     return bool(re.match(Config.PHONE_NUMBER_REGEX, phone))
 
-# Helper function for member creation
-def create_member(full_name, zaq_number, jumuiya, outstation, center, zone, phone_number, redirect_to='auth.login'):
-    if not all([full_name, zaq_number, phone_number]):
-        flash('Required fields must be filled!', category='error')
-        return False, render_template(Config.TEMPLATES['sign_up'], user=current_user)
-
-    if not is_valid_phone(phone_number):
-        flash('Invalid phone number format.', category='error')
-        return False, render_template(Config.TEMPLATES['sign_up'], user=current_user)
-
-    if Member.query.filter_by(zaq_number=zaq_number).first():
-        flash('ZAQ Number already exists!', category='error')
-        return False, render_template(Config.TEMPLATES['sign_up'], user=current_user)
-
-    new_member = Member(
-        full_name=full_name, zaq_number=zaq_number, jumuiya=jumuiya,
-        outstation=outstation, center=center, zone=zone, phone_number=phone_number
-    )
-    db.session.add(new_member)
+def commit_to_db(obj):
     try:
+        db.session.add(obj)
         db.session.commit()
-        flash('Member added successfully!', category='success')
-        return True, redirect(url_for(redirect_to))
-    except Exception:
+        return True
+    except Exception as e:
         db.session.rollback()
-        flash('An error occurred while adding the member.', category='error')
-        return False, render_template(Config.TEMPLATES['sign_up'], user=current_user)
+        logger.error(f"Database error: {str(e)}")
+        flash('A database error occurred. Please try again.', 'error')
+        return False
 
-# Admin-only decorator
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.__class__.__name__ != 'Admin':
-            flash('Access denied. Admin privileges required.', category='error')
+        if not current_user.is_authenticated or not getattr(current_user, 'is_admin', False):
+            flash('Admin access required', 'error')
             return redirect(url_for('auth.admin_login'))
         return f(*args, **kwargs)
     return decorated_function
 
-@auth.route('/', methods=['GET'])
+@auth.route('/')
 def landing_page():
-    """Render the landing page."""
     return render_template(Config.TEMPLATES['landing'])
 
-@auth.route('/get_started', methods=['GET'])
+@auth.route('/get_started')
 def get_started():
-    """Render the get started page."""
     return render_template(Config.TEMPLATES['get_started'])
 
 @auth.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def login():
-    """Handle member login with ZAQ number and phone number."""
+    if current_user.is_authenticated and not getattr(current_user, 'is_admin', False):
+        return redirect(url_for('auth.member_dashboard'))
+
     if request.method == 'POST':
         zaq_number = request.form.get('zaq_number', '').strip()
         phone_number = request.form.get('phone_number', '').strip()
 
         if not zaq_number or not phone_number:
-            flash('ZAQ Number and phone number are required.', category='error')
-            return render_template(Config.TEMPLATES['login'], user=current_user)
-
-        if not is_valid_phone(phone_number):
-            flash('Invalid phone number format.', category='error')
-            return render_template(Config.TEMPLATES['login'], user=current_user)
-
-        member = Member.query.filter_by(zaq_number=zaq_number).first()
-        if member and member.phone_number == phone_number:
-            login_user(member, remember=True)
-            flash('Login successful!', category='success')
-            return redirect(url_for('auth.member_dashboard'))
+            flash('Both fields are required', 'error')
+        elif not is_valid_phone(phone_number):
+            flash('Invalid phone number format', 'error')
         else:
-            logger.warning(f"Failed login attempt for ZAQ: {zaq_number}, Phone: {phone_number}")
-            flash('Invalid ZAQ Number or phone number.', category='error')
+            member = Member.query.filter_by(zaq_number=zaq_number).first()
+            if member and member.phone_number == phone_number:
+                login_user(member, remember=True)
+                logger.info(f"Member login: {zaq_number}")
+                flash('Login successful!', 'success')
+                return redirect(url_for('auth.member_dashboard'))
+            else:
+                logger.warning(f"Failed login: {zaq_number}")
+                flash('Invalid credentials', 'error')
 
-    return render_template(Config.TEMPLATES['login'], user=current_user)
+    return render_template(Config.TEMPLATES['login'])
 
-@auth.route('/logout', methods=['GET'])
+@auth.route('/logout')
+@login_required
 def logout():
-    """Handle member logout."""
     logout_user()
-    flash('Logged out successfully!', category='info')
+    flash('Logged out successfully', 'info')
     return redirect(url_for('auth.login'))
 
 @auth.route('/sign_up', methods=['GET', 'POST'])
 def sign_up():
-    """Handle member registration."""
     if request.method == 'POST':
-        success, response = create_member(
-            request.form.get('full_name'), request.form.get('zaq_number'),
-            request.form.get('jumuiya'), request.form.get('outstation'),
-            request.form.get('center'), request.form.get('zone'),
-            request.form.get('phone_number'), redirect_to='auth.login'
-        )
-        return response
-    return render_template(Config.TEMPLATES['sign_up'], user=current_user)
+        form_data = {
+            'full_name': request.form.get('full_name', '').strip(),
+            'zaq_number': request.form.get('zaq_number', '').strip(),
+            'phone_number': request.form.get('phone_number', '').strip(),
+            'jumuiya': request.form.get('jumuiya', '').strip(),
+            'outstation': request.form.get('outstation', '').strip(),
+            'center': request.form.get('center', '').strip(),
+            'zone': request.form.get('zone', '').strip()
+        }
+
+        required_fields = ['full_name', 'zaq_number', 'phone_number']
+        if not all(form_data[field] for field in required_fields):
+            flash('Missing required fields', 'error')
+        elif not is_valid_phone(form_data['phone_number']):
+            flash('Invalid phone number format', 'error')
+        elif Member.query.filter_by(zaq_number=form_data['zaq_number']).first():
+            flash('ZAQ number already registered', 'error')
+        else:
+            new_member = Member(**form_data)
+            if commit_to_db(new_member):
+                flash('Registration successful! Please login', 'success')
+                return redirect(url_for('auth.login'))
+                
+    return render_template(Config.TEMPLATES['sign_up'])
+
+@auth.route('/member_dashboard')
+@login_required
+def member_dashboard():
+    if getattr(current_user, 'is_admin', False):
+        return redirect(url_for('auth.admin_dashboard'))
+    
+    upcoming_events = Event.query.filter(
+        Event.date >= datetime.now()
+    ).order_by(Event.date).limit(5).all()
+    
+    return render_template(Config.TEMPLATES['member_dashboard'], events=upcoming_events)
 
 @auth.route('/admin_login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")  # Added for consistency
+@limiter.limit("5 per minute")
 def admin_login():
-    """Handle admin login with email and password."""
-    if current_user.is_authenticated and current_user.__class__.__name__ == 'Admin':
-        return redirect(url_for('auth.admin_activities'))
+    if current_user.is_authenticated and getattr(current_user, 'is_admin', False):
+        return redirect(url_for('auth.admin_dashboard'))
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-
-        if not email or not password:
-            flash('Email and password are required.', category='error')
-            return render_template(Config.TEMPLATES['admin_login'], user=current_user)
+        password = request.form.get('password', '').strip()
 
         admin = Admin.query.filter_by(email=email).first()
-        if admin and check_password_hash(admin.password, password):
+        if admin and check_password_hash(admin.password, password) and admin.is_admin:
             login_user(admin, remember=True)
-            flash('Admin login successful!', category='success')
-            return redirect(url_for('auth.admin_activities'))
+            logger.info(f"Admin login: {email}")
+            flash('Admin login successful!', 'success')
+            return redirect(url_for('auth.admin_dashboard'))
         else:
-            logger.warning(f"Failed admin login attempt for email: {email}")
-            flash('Invalid email or password.', category='error')
+            logger.warning(f"Failed admin login: {email}")
+            flash('Invalid credentials', 'error')
 
-    return render_template(Config.TEMPLATES['admin_login'], user=current_user)
+    return render_template(Config.TEMPLATES['admin_login'])
 
 @auth.route('/admin_signup', methods=['GET', 'POST'])
 def admin_signup():
-    """Handle admin registration."""
-    if current_user.is_authenticated and current_user.__class__.__name__ == 'Admin':
-        return redirect(url_for('auth.admin_activities'))
+    if current_user.is_authenticated and getattr(current_user, 'is_admin', False):
+        return redirect(url_for('auth.admin_dashboard'))
 
     if request.method == 'POST':
-        full_name = request.form.get('full_name', '').strip()
-        email = request.form.get('email', '').strip()
-        phone_number = request.form.get('phone_number', '').strip()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
+        form_data = {
+            'full_name': request.form.get('full_name', '').strip(),
+            'email': request.form.get('email', '').strip(),
+            'phone_number': request.form.get('phone_number', '').strip(),
+            'password': request.form.get('password', ''),
+            'confirm_password': request.form.get('confirm_password', '')
+        }
 
-        if not all([full_name, email, phone_number, password, confirm_password]):
-            flash('All fields are required.', category='error')
-            return render_template(Config.TEMPLATES['admin_signup'], user=current_user)
+        if not all(form_data.values()):
+            flash('All fields are required', 'error')
+        elif form_data['password'] != form_data['confirm_password']:
+            flash('Passwords do not match', 'error')
+        elif not is_valid_phone(form_data['phone_number']):
+            flash('Invalid phone number format', 'error')
+        elif Admin.query.count() >= Config.MAX_ADMINS:
+            flash(f'Maximum {Config.MAX_ADMINS} admins allowed', 'error')
+        elif Admin.query.filter_by(email=form_data['email']).first():
+            flash('Email already registered', 'error')
+        else:
+            hashed_password = generate_password_hash(form_data['password'], method='pbkdf2:sha256')
+            new_admin = Admin(
+                full_name=form_data['full_name'],
+                email=form_data['email'],
+                phone_number=form_data['phone_number'],
+                password=hashed_password,
+                is_admin=True
+            )
+            if commit_to_db(new_admin):
+                flash('Admin account created! Please login', 'success')
+                return redirect(url_for('auth.admin_login'))
+                
+    return render_template(Config.TEMPLATES['admin_signup'])
 
-        if password != confirm_password:
-            flash('Passwords do not match!', category='error')
-            return render_template(Config.TEMPLATES['admin_signup'], user=current_user)
+@auth.route('/admin_dashboard')
+@admin_required
+def admin_dashboard():
+    stats = {
+        'members': Member.query.count(),
+        'events': Event.query.count(),
+        'recent_members': Member.query.order_by(
+            Member.date_joined.desc()
+        ).limit(5).all()
+    }
+    return render_template(Config.TEMPLATES['admin_activities'], stats=stats)
 
-        if not is_valid_phone(phone_number):
-            flash('Invalid phone number format.', category='error')
-            return render_template(Config.TEMPLATES['admin_signup'], user=current_user)
-
-        admin_count = Admin.query.count()
-        if admin_count >= Config.MAX_ADMINS:
-            flash(f'Admin limit reached. Only {Config.MAX_ADMINS} admins allowed.', category='error')
-            return render_template(Config.TEMPLATES['admin_signup'], user=current_user)
-
-        existing_admin = Admin.query.filter_by(email=email).first()
-        if existing_admin:
-            flash('Email already exists!', category='error')
-            return render_template(Config.TEMPLATES['admin_signup'], user=current_user)
-
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_admin = Admin(
-            full_name=full_name, email=email,
-            phone_number=phone_number, password=hashed_password
-        )
-        db.session.add(new_admin)
-        try:
-            db.session.commit()
-            flash('Admin account created successfully! Please log in.', category='success')
-            return redirect(url_for('auth.admin_login'))
-        except Exception:
-            db.session.rollback()
-            flash('An error occurred while creating the admin account.', category='error')
-
-    return render_template(Config.TEMPLATES['admin_signup'], user=current_user)
-
-@auth.route('/admin_logout', methods=['GET'])
-@login_required
+@auth.route('/admin_logout')
 @admin_required
 def admin_logout():
-    """Handle admin logout."""
     logout_user()
-    flash('Admin logged out successfully!', category='info')
+    flash('Admin logged out', 'info')
     return redirect(url_for('auth.admin_login'))
 
-@auth.route('/admin_activities', methods=['GET'])
-@login_required
-@admin_required
-def admin_activities():
-    """Render admin activities dashboard."""
-    return render_template(Config.TEMPLATES['admin_activities'], user=current_user)
-
-@auth.route('/add_event', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def add_event():
-    """Handle event creation."""
-    if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        theme = request.form.get('theme', '').strip()
-        involved = request.form.get('involved', '').strip()
-        venue = request.form.get('venue', '').strip()
-        date_str = request.form.get('date', '').strip()
-
-        if not all([title, theme, involved, venue, date_str]):
-            flash('All fields are required!', category='error')
-            return render_template(Config.TEMPLATES['add_event'], user=current_user)
-
-        try:
-            date = datetime.strptime(date_str, '%Y-%m-%d')
-            new_event = Event(
-                title=title, theme=theme, involved=involved,
-                venue=venue, date=date, user_id=None
-            )
-            db.session.add(new_event)
-            db.session.commit()
-            flash('Event added successfully!', category='success')
-            return redirect(url_for('auth.manage_events'))
-        except ValueError:
-            flash('Invalid date format. Use YYYY-MM-DD.', category='error')
-        except Exception:
-            db.session.rollback()
-            flash('An error occurred while adding the event.', category='error')
-
-    return render_template(Config.TEMPLATES['add_event'], user=current_user)
-
-@auth.route('/add_member', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def add_member():
-    """Handle admin adding a new member."""
-    if request.method == 'POST':
-        success, response = create_member(
-            request.form.get('full_name'), request.form.get('zaq_number'),
-            request.form.get('jumuiya'), request.form.get('outstation'),
-            request.form.get('center'), request.form.get('zone'),
-            request.form.get('phone_number'), redirect_to='auth.admin_activities'
-        )
-        return response
-    return render_template(Config.TEMPLATES['sign_up'], user=current_user)
-
-@auth.route('/manage_members', methods=['GET'])
-@login_required
+@auth.route('/manage_members')
 @admin_required
 def manage_members():
-    """Handle member management with search, sort, and pagination."""
     page = request.args.get('page', 1, type=int)
-    per_page = 10
-    search_query = request.args.get('search', '').strip()
-    sort_by = request.args.get('sort_by', 'outstation')
-
+    search = request.args.get('search', '').strip()
+    
     query = Member.query
-    if search_query:
-        query = query.filter(Member.zaq_number.like(f"%{search_query}%"))
-    query = query.order_by(Member.zone if sort_by == 'zone' else Member.outstation)
-    members = query.paginate(page=page, per_page=per_page)
+    if search:
+        query = query.filter(
+            Member.full_name.ilike(f'%{search}%') | 
+            Member.zaq_number.ilike(f'%{search}%')
+        )
+    
+    members = query.order_by(
+        Member.outstation
+    ).paginate(page=page, per_page=20)
+    
+    return render_template(Config.TEMPLATES['manage_members'], members=members)
 
-    outstation_counts = db.session.query(Member.outstation, db.func.count(Member.id)).group_by(Member.outstation).all()
-    zone_counts = db.session.query(Member.zone, db.func.count(Member.id)).group_by(Member.zone).all()
-
-    return render_template(
-        Config.TEMPLATES['manage_members'], user=current_user, members=members,
-        outstation_counts=outstation_counts, zone_counts=zone_counts,
-        search_query=search_query, sort_by=sort_by
-    )
-
-@auth.route('/edit_member/<int:member_id>', methods=['GET', 'POST'])
-@login_required
+@auth.route('/add_event', methods=['GET', 'POST'])
 @admin_required
-def edit_member(member_id):
-    """Handle editing a member."""
-    member = Member.query.get_or_404(member_id)
-
+def add_event():
     if request.method == 'POST':
-        full_name = request.form.get('full_name', '').strip()
-        zaq_number = request.form.get('zaq_number', '').strip()
-        jumuiya = request.form.get('jumuiya', '').strip()
-        outstation = request.form.get('outstation', '').strip()
-        center = request.form.get('center', '').strip()
-        zone = request.form.get('zone', '').strip()
-        phone_number = request.form.get('phone_number', '').strip()
-
-        if not all([full_name, zaq_number, phone_number]):
-            flash('Required fields must be filled!', category='error')
-            return render_template(Config.TEMPLATES['edit_member'], member=member, user=current_user)
-
-        if not is_valid_phone(phone_number):
-            flash('Invalid phone number format.', category='error')
-            return render_template(Config.TEMPLATES['edit_member'], member=member, user=current_user)
-
-        existing_member = Member.query.filter_by(zaq_number=zaq_number).filter(Member.id != member_id).first()
-        if existing_member:
-            flash('ZAQ Number already exists!', category='error')
-            return render_template(Config.TEMPLATES['edit_member'], member=member, user=current_user)
-
-        member.full_name = full_name
-        member.zaq_number = zaq_number
-        member.jumuiya = jumuiya
-        member.outstation = outstation
-        member.center = center
-        member.zone = zone
-        member.phone_number = phone_number
         try:
-            db.session.commit()
-            flash('Member updated successfully!', category='success')
-            return redirect(url_for('auth.manage_members'))
-        except Exception:
-            db.session.rollback()
-            flash('An error occurred while updating the member.', category='error')
+            event = Event(
+                title=request.form.get('title', '').strip(),
+                theme=request.form.get('theme', '').strip(),
+                involved=request.form.get('involved', '').strip(),
+                venue=request.form.get('venue', '').strip(),
+                date=datetime.strptime(request.form.get('date'), '%Y-%m-%d'),
+                admin_id=current_user.id
+            )
+            if commit_to_db(event):
+                flash('Event added successfully', 'success')
+                return redirect(url_for('auth.manage_events'))
+        except ValueError:
+            flash('Invalid date format', 'error')
+        except Exception as e:
+            logger.error(f"Event creation error: {str(e)}")
+            flash('Error creating event', 'error')
+    
+    return render_template(Config.TEMPLATES['add_event'])
 
-    return render_template(Config.TEMPLATES['edit_member'], member=member, user=current_user)
-
-@auth.route('/delete_member/<int:member_id>', methods=['POST'])
-@login_required
-@admin_required
-def delete_member(member_id):
-    """Handle deleting a member."""
-    member = Member.query.get_or_404(member_id)
-    try:
-        db.session.delete(member)
-        db.session.commit()
-        flash('Member deleted successfully!', category='success')
-    except Exception:
-        db.session.rollback()
-        flash('An error occurred while deleting the member.', category='error')
-    return redirect(url_for('auth.manage_members'))
-
-@auth.route('/manage_events', methods=['GET'])
-@login_required
+@auth.route('/manage_events')
 @admin_required
 def manage_events():
-    """Handle event management with pagination."""
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
-    events = Event.query.order_by(Event.date).paginate(page=page, per_page=per_page)
-    return render_template(Config.TEMPLATES['manage_events'], user=current_user, events=events)
+    events = Event.query.order_by(Event.date.desc()).all()
+    return render_template(Config.TEMPLATES['manage_events'], events=events)
 
 @auth.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
-@login_required
 @admin_required
 def edit_event(event_id):
-    """Handle editing an event."""
     event = Event.query.get_or_404(event_id)
-
+    
     if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        theme = request.form.get('theme', '').strip()
-        involved = request.form.get('involved', '').strip()
-        venue = request.form.get('venue', '').strip()
-        date_str = request.form.get('date', '').strip()
-
-        if not all([title, theme, involved, venue, date_str]):
-            flash('All fields are required!', category='error')
-            return render_template(Config.TEMPLATES['edit_event'], user=current_user, event=event)
-
         try:
-            event.date = datetime.strptime(date_str, '%Y-%m-%d')
-            event.title = title
-            event.theme = theme
-            event.involved = involved
-            event.venue = venue
+            event.title = request.form.get('title', '').strip()
+            event.theme = request.form.get('theme', '').strip()
+            event.involved = request.form.get('involved', '').strip()
+            event.venue = request.form.get('venue', '').strip()
+            event.date = datetime.strptime(request.form.get('date'), '%Y-%m-%d')
             db.session.commit()
-            flash('Event updated successfully!', category='success')
+            flash('Event updated successfully', 'success')
             return redirect(url_for('auth.manage_events'))
         except ValueError:
-            flash('Invalid date format. Use YYYY-MM-DD.', category='error')
-        except Exception:
+            flash('Invalid date format', 'error')
+        except Exception as e:
             db.session.rollback()
-            flash('An error occurred while updating the event.', category='error')
-
-    return render_template(Config.TEMPLATES['edit_event'], user=current_user, event=event)
+            logger.error(f"Event update error: {str(e)}")
+            flash('Error updating event', 'error')
+    
+    return render_template(Config.TEMPLATES['edit_event'], event=event)
 
 @auth.route('/delete_event/<int:event_id>', methods=['POST'])
-@login_required
 @admin_required
 def delete_event(event_id):
-    """Handle deleting an event."""
     event = Event.query.get_or_404(event_id)
     try:
         db.session.delete(event)
         db.session.commit()
-        flash('Event deleted successfully!', category='success')
-    except Exception:
+        flash('Event deleted successfully', 'success')
+    except Exception as e:
         db.session.rollback()
-        flash('An error occurred while deleting the event.', category='error')
+        logger.error(f"Event deletion error: {str(e)}")
+        flash('Error deleting event', 'error')
     return redirect(url_for('auth.manage_events'))
 
-@auth.route('/member_dashboard', methods=['GET'])
-@login_required
-def member_dashboard():
-    """Render member dashboard."""
-    if current_user.__class__.__name__ == 'Admin':
-        flash('Admins cannot access member dashboard.', category='error')
-        return redirect(url_for('auth.admin_activities'))
-    return render_template(Config.TEMPLATES['member_dashboard'])
-
-@auth.route('/view_events', methods=['GET'])
+@auth.route('/view_events')
 @login_required
 def view_events():
-    """Display all events for members."""
     events = Event.query.order_by(Event.date).all()
     return render_template(Config.TEMPLATES['view_events'], events=events)
 
-@auth.route('/view_readings', methods=['GET'])
+@auth.route('/view_readings')
 @login_required
 def view_readings():
-    """Render readings page for members."""
     return render_template(Config.TEMPLATES['view_readings'])
