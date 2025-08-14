@@ -197,7 +197,7 @@ def admin_signup():
                 email=form_data['email'],
                 phone_number=form_data['phone_number'],
                 password=hashed_password,
-                is_admin=True
+                #is_admin=True
             )
             if commit_to_db(new_admin):
                 flash('Admin account created! Please login', 'success')

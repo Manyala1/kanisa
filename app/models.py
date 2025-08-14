@@ -3,22 +3,19 @@ from flask_login import UserMixin
 from datetime import datetime
 
 class Admin(db.Model, UserMixin):
-    is_admin = db.Column(db.Boolean, default=True)
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     full_name = db.Column(db.String(150), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    # Define relationship after Event model has admin_id foreign key
+
     events = db.relationship('Event', backref='created_by_admin', lazy=True)
 
-    def get_id(self):
-        return str(self.id)
-    
     @property
     def is_admin(self):
         return True
 
+    
 class Member(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     zaq_number = db.Column(db.String(50), unique=True, nullable=False)
