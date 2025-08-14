@@ -5,6 +5,7 @@ from .models import Member, Event
 from . import db
 from datetime import datetime, timedelta
 import logging
+#from utils import fetch_readings, fetch_liturgical_events
 
 
 views = Blueprint('views', __name__)
@@ -153,7 +154,8 @@ def view_readings():
     return render_template(
         "view_readings.html",
         readings=readings,
-        liturgy=liturgy
+        liturgy=liturgy,
+        date=date or "Today"
     )
 
 

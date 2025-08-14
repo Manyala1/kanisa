@@ -1,23 +1,48 @@
-<h2>Liturgical Calendar</h2>
-{% if liturgy %}
-  <p><strong>Date:</strong> {{ liturgy.date }}</p>
-  <p><strong>Season:</strong> {{ liturgy.season }}</p>
-  <p><strong>Celebrations:</strong></p>
-  <ul>
-    {% for celebration in liturgy.celebrations %}
-      <li>{{ celebration.title }} ({{ celebration.rank }})</li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>No liturgical data available.</p>
-{% endif %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Readings</title>
+</head>
+<body>
+    <h1>Daily Readings for {{ date }}</h1>
 
-<h2>Daily Readings</h2>
-{% if readings %}
-  {% for reading in readings.readings %}
-    <h3>{{ reading.title }}</h3>
-    <p>{{ reading.text|safe }}</p>
-  {% endfor %}
-{% else %}
-  <p>No readings available.</p>
-{% endif %}
+    {# Flash messages for errors #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <h2>Liturgical Calendar</h2>
+    {% if liturgy %}
+      <p><strong>{{ liturgy.title or liturgy.name or "Unnamed Feast" }}</strong></p>
+      {% if liturgy.rank %}
+        <p>Rank: {{ liturgy.rank }}</p>
+      {% endif %}
+      {% if liturgy.colour %}
+        <p>Liturgical Colour: {{ liturgy.colour }}</p>
+      {% endif %}
+    {% else %}
+      <p>No liturgical data available.</p>
+    {% endif %}
+
+    <h2>Daily Readings</h2>
+    {% if readings and readings.readings %}
+      <ul>
+        {% for reading in readings.readings %}
+          <li>
+            <strong>{{ reading.reference }}</strong><br>
+            {{ reading.text }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No readings available.</p>
+    {% endif %}
+</body>
+</html>
