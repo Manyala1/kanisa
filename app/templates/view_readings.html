@@ -1,47 +1,23 @@
-{% extends "base.html" %}
+<h2>Liturgical Calendar</h2>
+{% if liturgy %}
+  <p><strong>Date:</strong> {{ liturgy.date }}</p>
+  <p><strong>Season:</strong> {{ liturgy.season }}</p>
+  <p><strong>Celebrations:</strong></p>
+  <ul>
+    {% for celebration in liturgy.celebrations %}
+      <li>{{ celebration.title }} ({{ celebration.rank }})</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No liturgical data available.</p>
+{% endif %}
 
-{% block content %}
-<div class="container mt-4">
-    {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-    {% else %}
-        <!-- Liturgical Calendar Section -->
-        <div class="card mb-4">
-            <div class="card-header {% if calendar_info.is_solemnity %}bg-danger text-white{% elif calendar_info.is_feast %}bg-warning{% else %}bg-light{% endif %}">
-                <h3 class="card-title mb-0">
-                    {{ calendar_info.date }}
-                    {% if calendar_info.is_solemnity %}
-                        <span class="badge badge-light">Solemnity</span>
-                    {% elif calendar_info.is_feast %}
-                        <span class="badge badge-light">Feast</span>
-                    {% endif %}
-                </h3>
-            </div>
-            <div class="card-body">
-                <h4>{{ calendar_info.celebration }}</h4>
-                <p class="text-muted">{{ calendar_info.season }}</p>
-            </div>
-        </div>
-
-        <!-- Readings Section -->
-        <div class="readings-container">
-            {% for reading_type, reading in readings.readings.items() %}
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>{{ reading_type|replace('_', ' ')|title }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">{{ reading.reference }}</h6>
-                        {% for paragraph in reading.content %}
-                            <p>{{ paragraph }}</p>
-                        {% endfor %}
-                        {% if reading.response %}
-                            <p class="font-italic">Response: {{ reading.response }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-</div>
-{% endblock %}
+<h2>Daily Readings</h2>
+{% if readings %}
+  {% for reading in readings.readings %}
+    <h3>{{ reading.title }}</h3>
+    <p>{{ reading.text|safe }}</p>
+  {% endfor %}
+{% else %}
+  <p>No readings available.</p>
+{% endif %}

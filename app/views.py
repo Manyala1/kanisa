@@ -138,46 +138,24 @@ def view_events():
     return render_template('view_events.html', user=current_user, events=events)
 
 
-@views.route('/view_readings', methods=['GET'], endpoint='view_readings')
+@views.route("/readings", methods=["GET"])
 @login_required
 def view_readings():
-    try:
-        current_app.logger.debug("Attempting to fetch readings...")
-        readings = fetch_todays_readings()
-        
-        if not readings:
-            current_app.logger.error("No readings data received from USCCB")
-            flash('Unable to fetch today\'s readings. Please try again later.', 'error')
-            return redirect(url_for('views.home'))
-        
-        # Log the received data for debugging
-        current_app.logger.debug(f"Received readings data: {readings}")
-        
-        # Validate the data structure
-        required_keys = ['date', 'liturgical_info', 'readings']
-        if not all(key in readings for key in required_keys):
-            raise ValueError("Invalid readings data structure")
-            
-        # Enhance liturgical information
-        liturgical_info = readings.get('liturgical_info', {})
-        calendar_info = {
-            'season': liturgical_info.get('season', 'Ordinary Time'),
-            'celebration': liturgical_info.get('celebration', ''),
-            'is_feast': 'feast' in (liturgical_info.get('celebration', '').lower()),
-            'is_solemnity': 'solemnity' in (liturgical_info.get('celebration', '').lower()),
-            'date': readings.get('date', datetime.now().strftime('%Y-%m-%d'))
-        }
-        
-        return render_template('view_readings.html', 
-                             readings=readings,
-                             calendar_info=calendar_info,
-                             error=None)
-        
-    except Exception as e:
-        current_app.logger.error(f"Error in view_readings: {str(e)}")
-        return render_template('view_readings.html', 
-                             readings=None,
-                             error="Unable to fetch today's readings. Please try again later.")
+    date = request.args.get("date")  # optional ?date=YYYY-MM-DD
+    readings = fetch_readings(date)
+    liturgy = fetch_liturgical_events(date)
+
+    if readings is None:
+        flash("Could not fetch daily readings.", "error")
+    if liturgy is None:
+        flash("Could not fetch liturgical events.", "error")
+
+    return render_template(
+        "view_readings.html",
+        readings=readings,
+        liturgy=liturgy
+    )
+
 
 @views.route('/about', methods=['GET'], endpoint='about')
 def about():

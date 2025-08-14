@@ -155,7 +155,8 @@ def admin_login():
         password = request.form.get('password', '').strip()
 
         admin = Admin.query.filter_by(email=email).first()
-        if admin and check_password_hash(admin.password, password) and admin.is_admin:
+
+        if admin and check_password_hash(admin.password, password):
             login_user(admin, remember=True)
             logger.info(f"Admin login: {email}")
             flash('Admin login successful!', 'success')
@@ -165,6 +166,7 @@ def admin_login():
             flash('Invalid credentials', 'error')
 
     return render_template(Config.TEMPLATES['admin_login'])
+
 
 @auth.route('/admin_signup', methods=['GET', 'POST'])
 def admin_signup():
