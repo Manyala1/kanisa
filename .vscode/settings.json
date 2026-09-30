@@ -1,0 +1,33 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3316,
+            "driver": "MariaDB",
+            "name": "mariadbConnection",
+            "database": "kanisa",
+            "username": "root",
+            "password": "2030"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3316,
+            "driver": "MariaDB",
+            "name": "sadam",
+            "group": "church",
+            "database": "kanisa",
+            "username": "root",
+            "askForPassword": true
+        }
+    ]
+}

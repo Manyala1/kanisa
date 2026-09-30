@@ -1,0 +1,64 @@
+/* Get Started Page */
+.get-started-container {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.get-started-container h1 {
+    font-size: 2.5rem;
+    color: #4CAF50;
+}
+
+.get-started-container p {
+    font-size: 1.2rem;
+    color: #666;
+    margin: 10px 0 20px;
+}
+
+.get-started-btn {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.get-started-btn:hover {
+    background-color: #45a049;
+}
+
+/* Routes Page */
+.routes-container {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.routes-container h1 {
+    font-size: 2rem;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+.routes-list {
+    list-style: none;
+    padding: 0;
+}
+
+.routes-list li {
+    margin: 10px 0;
+}
+
+.routes-list a {
+    font-size: 1.2rem;
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.routes-list a:hover {
+    color: #45a049;
+}

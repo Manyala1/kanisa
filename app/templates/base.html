@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DigiChurch</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f8f9fa;
+    }
+
+    .navbar {
+      background-color: #007bff !important;
+    }
+
+    .navbar-brand, .nav-link {
+      font-weight: bold;
+      color: #fff !important;
+    }
+
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+
+    .jumbotron {
+      background-color: #ffffff;
+      padding: 2rem;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .card {
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .alert {
+      font-size: 1rem;
+    }
+
+    .list-unstyled li {
+      margin-bottom: 6px;
+    }
+
+    /* Ensure full screen fit */
+    .container-fluid {
+      padding: 20px;
+    }
+
+    .row {
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .col-md-4 {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    @media (max-width: 768px) {
+      .jumbotron {
+        padding: 1rem;
+      }
+
+      h1.display-4 {
+        font-size: 1.8rem;
+      }
+
+      .lead {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('auth.landing_page') }}">DigiChurch</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        {% if not current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.sign_up') }}">Member Sign Up</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.login') }}">Member Login</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Admin Dashboard
+            </a>
+            <div class="dropdown-menu" aria-labelledby="adminDropdown">
+              <a class="dropdown-item" href="{{ url_for('auth.admin_login') }}">Admin Login</a>
+              <a class="dropdown-item" href="{{ url_for('auth.admin_signup') }}">Admin Sign Up</a>
+            </div>
+          </li>
+        {% else %}
+          {% if current_user.__class__.__name__ == 'Admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('auth.admin_activities') }}">Admin Activities</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('views.home') }}">Home</a>
+            </li>
+          {% endif %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <div class="jumbotron text-center bg-light p-4 rounded shadow-sm">
+    <h1 class="display-4 text-primary">Welcome to DigiChurch</h1>
+    <p class="lead">A digital bridge connecting our church community</p>
+    <hr class="my-4">
+    <p>Access daily readings, view events, and stay connected with your church family.</p>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 border-primary shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title text-primary">Our Mission</h4>
+          <ul class="list-unstyled">
+            <li><i class="fas fa-flag"></i> Providing a seamless digital experience for church members.</li>
+            <li><i class="fas fa-users"></i> Enhancing community engagement and communication.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 border-primary shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title text-primary">Features</h4>
+          <ul class="list-unstyled">
+            <li>✝️ Daily readings and reflections</li>
+            <li>📅 Church events and announcements</li>
+            <li>👥 Member registration and management</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 border-primary shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title text-primary">Contact Us</h4>
+          <ul class="list-unstyled">
+            <li><i class="fas fa-envelope"></i> Email: info@digichurch.com</li>
+            <li><i class="fas fa-phone"></i> Phone: +254 115307545</li>
+            <li><i class="fas fa-map-marker-alt"></i> Address: Church Street, City, Country</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  {% block scripts %}
+  {% endblock %}
+</body>
+</html>

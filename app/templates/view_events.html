@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Upcoming Events</h2>
+    {% if events %}
+        <p>Here are the upcoming events:</p>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Theme</th>
+                    <th>Who is Involved</th>
+                    <th>Venue</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                    <tr>
+                        <td>{{ event.title }}</td>
+                        <td>{{ event.theme }}</td>
+                        <td>{{ event.involved }}</td>
+                        <td>{{ event.venue }}</td>
+                        <td>{{ event.date.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No events available at the moment.</p>
+    {% endif %}
+</div>
+{% endblock %}
